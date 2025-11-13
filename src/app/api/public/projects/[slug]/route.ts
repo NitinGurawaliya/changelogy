@@ -1,10 +1,28 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(_request: Request, { params }: { params: { slug: string } }) {
+async function resolveParams(params: Promise<{ slug: string }>) {
+  const resolved = await params;
+
+  if (!resolved?.slug) {
+    throw new Error("Invalid slug.");
+  }
+
+  return resolved;
+}
+
+export async function GET(_request: NextRequest, context: { params: Promise<{ slug: string }> }) {
+  let slug: string;
+
+  try {
+    ({ slug } = await resolveParams(context.params));
+  } catch {
+    return NextResponse.json({ error: "Invalid project slug." }, { status: 400 });
+  }
+
   const project = await prisma.project.findFirst({
     where: {
-      slug: params.slug,
+      slug,
       visibility: "PUBLIC",
     },
     select: {

@@ -58,7 +58,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
               Keep your team aligned with updates. Create a dedicated changelog for every project.
             </p>
           </div>
-          <SignOutButton variant="outline" className="w-full justify-center">
+          <SignOutButton variant="outline">
             Sign out
           </SignOutButton>
         </div>
@@ -68,12 +68,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <header className="flex h-16 flex-shrink-0 items-center justify-between border-b border-neutral-200/70 bg-white/85 px-4 shadow-sm shadow-neutral-200/60 backdrop-blur sm:px-6">
           <div>
             <h1 className="text-lg font-semibold text-neutral-900 sm:text-xl">Dashboard</h1>
-            <p className="hidden text-xs text-neutral-500 sm:block">
-              Track projects, ship releases, and keep your customers informed.
-            </p>
-          </div>
+          </div>  
           <div className="flex items-center gap-2">
-            <Link
+            {/* <Link
               href="/projects"
               className={cn(
                 buttonVariants({ variant: "outline", size: "sm" }),
@@ -81,8 +78,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
               )}
             >
               Gallery
-            </Link>
-            <CreateProjectModal />
+            </Link> */}
+            {/* <CreateProjectModal /> */}
           </div>
         </header>
 

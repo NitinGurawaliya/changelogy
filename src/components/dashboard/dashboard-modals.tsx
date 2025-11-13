@@ -7,10 +7,12 @@ import { CreateProjectForm } from "./create-project-form";
 import { CreateVersionForm } from "./create-version-form";
 import { cn } from "@/lib/utils";
 
+type ButtonSize = "default" | "sm" | "lg" | "icon" | "icon-sm" | "icon-lg";
+
 type CreateProjectModalProps = {
   triggerLabel?: string;
   buttonVariant?: "solid" | "outline";
-  size?: "sm" | "md";
+  size?: ButtonSize;
   className?: string;
 };
 
@@ -55,7 +57,7 @@ type CreateVersionModalProps = {
   projectName: string;
   triggerVariant?: "solid" | "outline";
   triggerLabel?: string;
-  size?: "sm" | "md";
+  size?: ButtonSize;
   className?: string;
 };
 

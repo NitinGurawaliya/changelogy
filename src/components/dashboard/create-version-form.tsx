@@ -20,7 +20,7 @@ export function CreateVersionForm({ projectId, projectSlug, projectName, onSucce
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    if (state.status === "success" && state.projectSlug === projectSlug) {
+    if (state.status === "success" && state.projectSlug === projectSlug && state.versionSlug) {
       formRef.current?.reset();
       onSuccess?.({ versionSlug: state.versionSlug });
     }
@@ -65,7 +65,7 @@ export function CreateVersionForm({ projectId, projectSlug, projectName, onSucce
       </div>
 
       {state.status === "error" ? <p className="text-sm text-red-500">{state.message}</p> : null}
-      {state.status === "success" && state.projectSlug === projectSlug ? (
+      {state.status === "success" && state.projectSlug === projectSlug && state.versionSlug ? (
         <p className="text-sm text-emerald-500">
           Release published! Public link: /projects/{projectSlug}/versions/{state.versionSlug}
         </p>

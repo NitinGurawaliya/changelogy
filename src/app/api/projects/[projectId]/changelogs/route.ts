@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
@@ -16,16 +16,33 @@ async function requireUserId() {
   return session?.user?.id ?? null;
 }
 
-export async function GET(_request: Request, { params }: { params: { projectId: string } }) {
+async function resolveParams(params: Promise<{ projectId: string }>) {
+  const resolved = await params;
+
+  if (!resolved?.projectId) {
+    throw new Error("Invalid project id.");
+  }
+
+  return resolved;
+}
+
+export async function GET(_request: NextRequest, context: { params: Promise<{ projectId: string }> }) {
   const userId = await requireUserId();
 
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized request." }, { status: 401 });
   }
 
+  let projectId: string;
+  try {
+    ({ projectId } = await resolveParams(context.params));
+  } catch {
+    return NextResponse.json({ error: "Invalid project id." }, { status: 400 });
+  }
+
   const project = await prisma.project.findFirst({
     where: {
-      id: params.projectId,
+      id: projectId,
       ownerId: userId,
     },
     select: {
@@ -45,16 +62,23 @@ export async function GET(_request: Request, { params }: { params: { projectId: 
   return NextResponse.json({ project });
 }
 
-export async function POST(request: Request, { params }: { params: { projectId: string } }) {
+export async function POST(request: NextRequest, context: { params: Promise<{ projectId: string }> }) {
   const userId = await requireUserId();
 
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized request." }, { status: 401 });
   }
 
+  let projectId: string;
+  try {
+    ({ projectId } = await resolveParams(context.params));
+  } catch {
+    return NextResponse.json({ error: "Invalid project id." }, { status: 400 });
+  }
+
   const project = await prisma.project.findFirst({
     where: {
-      id: params.projectId,
+      id: projectId,
       ownerId: userId,
     },
     select: {

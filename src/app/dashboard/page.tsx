@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateProjectModal, CreateVersionModal } from "@/components/dashboard/dashboard-modals";
+import { getBaseUrl } from "@/lib/url";
+import { ShareLinkButton } from "@/components/share-link-button";
 
 function formatDate(date: Date) {
   return date.toLocaleDateString("en-US", {
@@ -78,6 +80,7 @@ export default async function Dashboard() {
 
   const totalProjects = projects.length;
   const totalReleases = publishedCount + draftCount;
+  const baseUrl = getBaseUrl();
 
   return (
     <div className="flex flex-col gap-10">
@@ -129,45 +132,6 @@ export default async function Dashboard() {
         </Card>
       </section>
 
-      <section className="rounded-3xl border border-neutral-200/80 bg-white p-8 shadow-md shadow-neutral-200/70">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="max-w-xl space-y-2">
-            <h2 className="text-2xl font-semibold text-neutral-900">Launch a project space</h2>
-            <p className="text-sm text-neutral-500">
-              Create a dedicated dashboard, capture version names, and publish updates in minutes.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <CreateProjectModal triggerLabel="Create project" size="md" />
-            <Link
-              href="/projects"
-              className="text-sm font-semibold text-neutral-600 underline-offset-4 hover:text-neutral-900 hover:underline"
-            >
-              View public gallery
-            </Link>
-          </div>
-        </div>
-        <div className="mt-8 grid gap-4 text-sm text-neutral-600 sm:grid-cols-3">
-          <div className="rounded-2xl border border-neutral-200/70 bg-neutral-50/70 p-4">
-            <p className="font-semibold text-neutral-800">Clear version history</p>
-            <p className="mt-2 text-xs text-neutral-500">
-              Every release captures a version label so your timeline stays readable.
-            </p>
-          </div>
-          <div className="rounded-2xl border border-neutral-200/70 bg-neutral-50/70 p-4">
-            <p className="font-semibold text-neutral-800">Instant public pages</p>
-            <p className="mt-2 text-xs text-neutral-500">
-              Publish a shareable changelog the moment you mark a release as live.
-            </p>
-          </div>
-          <div className="rounded-2xl border border-neutral-200/70 bg-neutral-50/70 p-4">
-            <p className="font-semibold text-neutral-800">Private drafts</p>
-            <p className="mt-2 text-xs text-neutral-500">
-              Prep updates in advance and polish them with your team before shipping.
-            </p>
-          </div>
-        </div>
-      </section>
 
       <section className="space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -178,18 +142,18 @@ export default async function Dashboard() {
             </p>
           </div>
           {projects.length > 0 ? (
-            <CreateProjectModal triggerLabel="New project" buttonVariant="outline" size="sm" />
+            <CreateProjectModal />
           ) : null}
         </div>
 
         {projects.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-neutral-200/90 bg-white/80 p-12 text-center shadow-inner shadow-neutral-200/40">
+          <div className="rounded-3xl border border-dashed border-neutral-200/90 bg-white/80 p-12 text-center">
             <h3 className="text-lg font-semibold text-neutral-800">No projects yet</h3>
             <p className="mt-2 text-sm text-neutral-500">
               Spin up a project to unlock a dashboard, version history, and public pages.
             </p>
             <div className="mt-6 flex justify-center">
-              <CreateProjectModal triggerLabel="Create your first project" size="md" />
+              <CreateProjectModal />
             </div>
           </div>
         ) : (
@@ -197,7 +161,7 @@ export default async function Dashboard() {
             {projects.map((project) => (
               <article
                 key={project.id}
-                className="flex h-full flex-col rounded-3xl border border-neutral-200/80 bg-white p-6 shadow-md shadow-neutral-200/70 transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-neutral-200/80"
+                className="flex h-full flex-col rounded-3xl border border-neutral-200/80 bg-white p-6 transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-neutral-200/80"
               >
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="space-y-2">
@@ -208,8 +172,18 @@ export default async function Dashboard() {
                       <p className="text-sm text-neutral-400">No description added yet.</p>
                     )}
                   </div>
-                  <div className="flex flex-col items-end gap-2 text-xs text-neutral-500">
-                    <span>Created {formatDate(project.createdAt)}</span>
+                  <div className="flex items-start gap-2 text-xs text-neutral-500">
+                    <ShareLinkButton
+                      url={`${baseUrl}/projects/${project.slug}`}
+                      triggerLabel="Share project"
+                      triggerVariant="ghost"
+                      triggerSize="icon"
+                      modalTitle="Share Project Link"
+                      modalDescription={`Share the ${project.name} changelog homepage.`}
+                      shareMessage={`Follow ${project.name} updates on Changelogy`}
+                      copyButtonLabel="Copy project link"
+                      ariaLabel="Share project"
+                    />
                     <CreateVersionModal
                       projectId={project.id}
                       projectSlug={project.slug}
@@ -222,7 +196,7 @@ export default async function Dashboard() {
                 </div>
 
                 <div className="mt-6 space-y-4">
-                  <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">
+                  <div className="flex flex-wrap items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">
                     <span>Recent releases</span>
                     <Link
                       href={`/projects/${project.slug}`}
@@ -248,9 +222,9 @@ export default async function Dashboard() {
                               {entry.publishedAt ? "Published" : "Draft"} • {formatDate(entry.createdAt)}
                             </span>
                           </div>
-                          {entry.summary ? (
+                          {/* {entry.summary ? (
                             <p className="mt-1 text-xs text-neutral-500">{entry.summary}</p>
-                          ) : null}
+                          ) : null} */}
                           <div className="mt-2 flex flex-wrap items-center gap-3 text-xs font-medium text-neutral-600">
                             <Link
                               href={`/projects/${project.slug}/versions/${entry.versionSlug}`}
@@ -258,6 +232,17 @@ export default async function Dashboard() {
                             >
                               View version
                             </Link>
+                            <ShareLinkButton
+                              url={`${baseUrl}/projects/${project.slug}/versions/${entry.versionSlug}`}
+                              triggerVariant="ghost"
+                              triggerSize="icon"
+                              modalTitle="Share Release Link"
+                              modalDescription={`Share ${project.name} • ${entry.versionLabel} with your audience.`}
+                              shareMessage={`${project.name} ${entry.versionLabel} release notes — see what's new`}
+                              fieldLabel="Release link"
+                              copyButtonLabel="Copy release link"
+                              ariaLabel={`Share ${entry.versionLabel}`}
+                            />
                             {!entry.publishedAt ? (
                               <span className="rounded-full bg-neutral-900 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-100">
                                 Draft
@@ -269,32 +254,13 @@ export default async function Dashboard() {
                     </ul>
                   )}
                 </div>
-
-                <div className="mt-auto pt-6">
-                  <div className="flex flex-wrap items-center gap-3 text-xs font-medium text-neutral-600">
-                    <Link
-                      href={`/projects/${project.slug}`}
-                      className="rounded-full border border-neutral-200 px-3 py-1 hover:border-neutral-300 hover:text-neutral-900"
-                    >
-                      View public changelog
-                    </Link>
-                    {project.changelogs.length > 0 ? (
-                      <Link
-                        href={`/projects/${project.slug}/versions/${project.changelogs[0]?.versionSlug ?? ""}`}
-                        className="rounded-full border border-neutral-200 px-3 py-1 hover:border-neutral-300 hover:text-neutral-900"
-                      >
-                        Latest version
-                      </Link>
-                    ) : null}
-                  </div>
-                </div>
               </article>
             ))}
           </div>
         )}
       </section>
 
-      <section className="rounded-3xl border border-neutral-200/80 bg-white p-8 shadow-md shadow-neutral-200/70">
+      {/* <section className="rounded-3xl border border-neutral-200/80 bg-white p-8 shadow-md shadow-neutral-200/70">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="text-xl font-semibold text-neutral-900">Recent activity</h2>
@@ -345,7 +311,7 @@ export default async function Dashboard() {
             ))}
           </ul>
         )}
-      </section>
+      </section> */}
     </div>
   );
 }

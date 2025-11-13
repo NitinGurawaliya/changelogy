@@ -56,6 +56,21 @@ export async function createProjectAction(
   const { name, description, visibility } = parsed.data;
   const slug = await generateUniqueProjectSlug(userId, name);
 
+  const existingProject = await prisma.project.findFirst({
+    where: {
+      ownerId: userId,
+      name,
+    },
+    select: { id: true },
+  });
+
+  if (existingProject) {
+    return {
+      status: "error",
+      message: "You already have a project with this name. Please choose another name.",
+    };
+  }
+
   const project = await prisma.project.create({
     data: {
       name,
