@@ -4,9 +4,7 @@ import { FolderGit2, Rocket, FileClock, History } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { CreateProjectForm } from "@/components/dashboard/create-project-form";
-import { CreateVersionForm } from "@/components/dashboard/create-version-form";
+import { CreateProjectModal, CreateVersionModal } from "@/components/dashboard/dashboard-modals";
 
 function formatDate(date: Date) {
   return date.toLocaleDateString("en-US", {
@@ -82,184 +80,230 @@ export default async function Dashboard() {
   const totalReleases = publishedCount + draftCount;
 
   return (
-    <div className="space-y-12">
+    <div className="flex flex-col gap-10">
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Card className="border-neutral-200/80 bg-white/90 shadow-sm shadow-neutral-200/60">
-          <CardHeader className="flex-row items-center justify-between">
+        <Card className="rounded-2xl border border-neutral-200/80 bg-white shadow-sm shadow-neutral-200/70">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-neutral-500">Total projects</CardTitle>
             <FolderGit2 className="size-5 text-neutral-400" />
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-semibold text-neutral-900">{totalProjects}</p>
-            <CardDescription className="mt-1">Across your product portfolio</CardDescription>
+            <CardDescription className="mt-2 text-sm text-neutral-500">Across your product portfolio</CardDescription>
           </CardContent>
         </Card>
 
-        <Card className="border-neutral-200/80 bg-white/90 shadow-sm shadow-neutral-200/60">
-          <CardHeader className="flex-row items-center justify-between">
+        <Card className="rounded-2xl border border-neutral-200/80 bg-white shadow-sm shadow-neutral-200/70">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-neutral-500">Published releases</CardTitle>
             <Rocket className="size-5 text-neutral-400" />
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-semibold text-neutral-900">{publishedCount}</p>
-            <CardDescription className="mt-1">Live on the public changelog</CardDescription>
+            <CardDescription className="mt-2 text-sm text-neutral-500">Live on the public changelog</CardDescription>
           </CardContent>
         </Card>
 
-        <Card className="border-neutral-200/80 bg-white/90 shadow-sm shadow-neutral-200/60">
-          <CardHeader className="flex-row items-center justify-between">
+        <Card className="rounded-2xl border border-neutral-200/80 bg-white shadow-sm shadow-neutral-200/70">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-neutral-500">Draft notes</CardTitle>
             <FileClock className="size-5 text-neutral-400" />
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-semibold text-neutral-900">{draftCount}</p>
-            <CardDescription className="mt-1">Ready but not yet published</CardDescription>
+            <CardDescription className="mt-2 text-sm text-neutral-500">Ready but not yet published</CardDescription>
           </CardContent>
         </Card>
 
-        <Card className="border-neutral-200/80 bg-white/90 shadow-sm shadow-neutral-200/60">
-          <CardHeader className="flex-row items-center justify-between">
+        <Card className="rounded-2xl border border-neutral-200/80 bg-white shadow-sm shadow-neutral-200/70">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-neutral-500">Total releases</CardTitle>
             <History className="size-5 text-neutral-400" />
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-semibold text-neutral-900">{totalReleases}</p>
-            <CardDescription className="mt-1">Updates recorded across changelogs</CardDescription>
+            <CardDescription className="mt-2 text-sm text-neutral-500">
+              Updates recorded across all changelogs
+            </CardDescription>
           </CardContent>
         </Card>
       </section>
 
-      <section
-        id="new-project"
-        className="rounded-3xl border border-neutral-200/80 bg-white/90 p-8 shadow-lg shadow-neutral-200/50"
-      >
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+      <section className="rounded-3xl border border-neutral-200/80 bg-white p-8 shadow-md shadow-neutral-200/70">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="max-w-xl space-y-2">
-            <h2 className="text-2xl font-semibold text-neutral-900">Start a new project</h2>
+            <h2 className="text-2xl font-semibold text-neutral-900">Launch a project space</h2>
             <p className="text-sm text-neutral-500">
-              Pick a name, add context, and your changelog homepage is ready to share.
+              Create a dedicated dashboard, capture version names, and publish updates in minutes.
             </p>
           </div>
-          <div>
-            <Link href="/projects" className="text-sm font-medium text-neutral-600 underline-offset-4 hover:underline">
-              Browse the public gallery
+          <div className="flex flex-wrap items-center gap-3">
+            <CreateProjectModal triggerLabel="Create project" size="md" />
+            <Link
+              href="/projects"
+              className="text-sm font-semibold text-neutral-600 underline-offset-4 hover:text-neutral-900 hover:underline"
+            >
+              View public gallery
             </Link>
           </div>
         </div>
-
-        <div className="mt-8">
-          <CreateProjectForm />
+        <div className="mt-8 grid gap-4 text-sm text-neutral-600 sm:grid-cols-3">
+          <div className="rounded-2xl border border-neutral-200/70 bg-neutral-50/70 p-4">
+            <p className="font-semibold text-neutral-800">Clear version history</p>
+            <p className="mt-2 text-xs text-neutral-500">
+              Every release captures a version label so your timeline stays readable.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-neutral-200/70 bg-neutral-50/70 p-4">
+            <p className="font-semibold text-neutral-800">Instant public pages</p>
+            <p className="mt-2 text-xs text-neutral-500">
+              Publish a shareable changelog the moment you mark a release as live.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-neutral-200/70 bg-neutral-50/70 p-4">
+            <p className="font-semibold text-neutral-800">Private drafts</p>
+            <p className="mt-2 text-xs text-neutral-500">
+              Prep updates in advance and polish them with your team before shipping.
+            </p>
+          </div>
         </div>
       </section>
 
       <section className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="text-xl font-semibold text-neutral-900">Your projects</h2>
-            <p className="text-sm text-neutral-500">Dedicated changelogs, latest releases, and quick actions.</p>
+            <p className="text-sm text-neutral-500">
+              Review changelog status, open versions, and create precise release notes.
+            </p>
           </div>
-          <Button asChild variant="outline" className="rounded-full">
-            <Link href="#new-project">New project</Link>
-          </Button>
+          {projects.length > 0 ? (
+            <CreateProjectModal triggerLabel="New project" buttonVariant="outline" size="sm" />
+          ) : null}
         </div>
 
         {projects.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-neutral-200/90 bg-white/80 p-12 text-center shadow-inner shadow-neutral-200/40">
             <h3 className="text-lg font-semibold text-neutral-800">No projects yet</h3>
             <p className="mt-2 text-sm text-neutral-500">
-              Get started by creating your first changelog. Its status will appear here once it exists.
+              Spin up a project to unlock a dashboard, version history, and public pages.
             </p>
-            <Button asChild className="mt-6 rounded-full px-6">
-              <Link href="#new-project">Create your first project</Link>
-            </Button>
+            <div className="mt-6 flex justify-center">
+              <CreateProjectModal triggerLabel="Create your first project" size="md" />
+            </div>
           </div>
         ) : (
           <div className="grid gap-6 lg:grid-cols-2">
             {projects.map((project) => (
-              <Card
+              <article
                 key={project.id}
-                className="border-neutral-200/80 bg-white/80 shadow-md shadow-neutral-200/50 transition-shadow hover:shadow-lg hover:shadow-neutral-200/70"
+                className="flex h-full flex-col rounded-3xl border border-neutral-200/80 bg-white p-6 shadow-md shadow-neutral-200/70 transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-neutral-200/80"
               >
-                <CardHeader>
-                  <div>
-                    <CardTitle className="flex items-center justify-between">
-                      <span className="text-lg font-semibold text-neutral-900">{project.name}</span>
-                      <span className="text-xs font-medium text-neutral-400">{formatDate(project.createdAt)}</span>
-                    </CardTitle>
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-semibold text-neutral-900">{project.name}</h3>
                     {project.description ? (
-                      <CardDescription className="mt-1 text-sm text-neutral-500">{project.description}</CardDescription>
-                    ) : null}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-xs text-neutral-500">
-                      <span>Recent releases</span>
-                      <Link
-                        href={`/projects/${project.slug}`}
-                        className="font-semibold text-neutral-800 underline-offset-4 hover:underline"
-                      >
-                        View public changelog
-                      </Link>
-                    </div>
-                    {project.changelogs.length === 0 ? (
-                      <div className="rounded-2xl border border-dashed border-neutral-200/80 bg-neutral-50/80 px-4 py-6 text-center text-sm text-neutral-500">
-                        No releases yet—add your first update.
-                      </div>
+                      <p className="text-sm text-neutral-500">{project.description}</p>
                     ) : (
-                      <ul className="space-y-3">
-                        {project.changelogs.map((entry) => (
-                          <li
-                            key={entry.id}
-                            className="rounded-2xl border border-neutral-200/80 bg-white/90 px-4 py-3 shadow-sm shadow-neutral-200/50"
-                          >
-                            <div className="flex items-center justify-between text-sm font-medium text-neutral-800">
-                              <span>{entry.versionLabel}</span>
-                              <span className="text-xs text-neutral-400">
-                                {entry.publishedAt ? "Published" : "Draft"} • {formatDate(entry.createdAt)}
-                              </span>
-                            </div>
-                            {entry.summary ? (
-                              <p className="mt-1 text-xs text-neutral-500">{entry.summary}</p>
-                            ) : null}
-                            <div className="mt-2 flex items-center gap-3 text-xs">
-                              <Link
-                                href={`/projects/${project.slug}/versions/${entry.versionSlug}`}
-                                className="font-semibold text-neutral-700 underline-offset-4 hover:underline"
-                              >
-                                View version page
-                              </Link>
-                              {entry.publishedAt ? null : (
-                                <span className="rounded-full bg-neutral-900 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-100">
-                                  Draft
-                                </span>
-                              )}
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
+                      <p className="text-sm text-neutral-400">No description added yet.</p>
                     )}
                   </div>
+                  <div className="flex flex-col items-end gap-2 text-xs text-neutral-500">
+                    <span>Created {formatDate(project.createdAt)}</span>
+                    <CreateVersionModal
+                      projectId={project.id}
+                      projectSlug={project.slug}
+                      projectName={project.name}
+                      triggerVariant="outline"
+                      triggerLabel="Add release"
+                      size="sm"
+                    />
+                  </div>
+                </div>
 
-                  <CreateVersionForm
-                    projectId={project.id}
-                    projectSlug={project.slug}
-                    projectName={project.name}
-                  />
-                </CardContent>
-              </Card>
+                <div className="mt-6 space-y-4">
+                  <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">
+                    <span>Recent releases</span>
+                    <Link
+                      href={`/projects/${project.slug}`}
+                      className="rounded-full border border-neutral-200 px-3 py-1 text-[11px] font-medium text-neutral-700 hover:border-neutral-300 hover:text-neutral-900"
+                    >
+                      Project page
+                    </Link>
+                  </div>
+                  {project.changelogs.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-neutral-200/80 bg-neutral-50/80 px-4 py-6 text-center text-sm text-neutral-500">
+                      No releases yet—add your first update.
+                    </div>
+                  ) : (
+                    <ul className="space-y-3">
+                      {project.changelogs.map((entry) => (
+                        <li
+                          key={entry.id}
+                          className="rounded-2xl border border-neutral-200/80 bg-white/90 px-4 py-3 shadow-sm shadow-neutral-200/50"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-3 text-sm font-semibold text-neutral-800">
+                            <span>{entry.versionLabel}</span>
+                            <span className="text-xs font-normal text-neutral-400">
+                              {entry.publishedAt ? "Published" : "Draft"} • {formatDate(entry.createdAt)}
+                            </span>
+                          </div>
+                          {entry.summary ? (
+                            <p className="mt-1 text-xs text-neutral-500">{entry.summary}</p>
+                          ) : null}
+                          <div className="mt-2 flex flex-wrap items-center gap-3 text-xs font-medium text-neutral-600">
+                            <Link
+                              href={`/projects/${project.slug}/versions/${entry.versionSlug}`}
+                              className="underline-offset-4 hover:underline"
+                            >
+                              View version
+                            </Link>
+                            {!entry.publishedAt ? (
+                              <span className="rounded-full bg-neutral-900 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-100">
+                                Draft
+                              </span>
+                            ) : null}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                <div className="mt-auto pt-6">
+                  <div className="flex flex-wrap items-center gap-3 text-xs font-medium text-neutral-600">
+                    <Link
+                      href={`/projects/${project.slug}`}
+                      className="rounded-full border border-neutral-200 px-3 py-1 hover:border-neutral-300 hover:text-neutral-900"
+                    >
+                      View public changelog
+                    </Link>
+                    {project.changelogs.length > 0 ? (
+                      <Link
+                        href={`/projects/${project.slug}/versions/${project.changelogs[0]?.versionSlug ?? ""}`}
+                        className="rounded-full border border-neutral-200 px-3 py-1 hover:border-neutral-300 hover:text-neutral-900"
+                      >
+                        Latest version
+                      </Link>
+                    ) : null}
+                  </div>
+                </div>
+              </article>
             ))}
           </div>
         )}
       </section>
 
-      <section className="rounded-3xl border border-neutral-200/80 bg-white/90 p-8 shadow-lg shadow-neutral-200/60">
-        <div className="flex items-center justify-between">
+      <section className="rounded-3xl border border-neutral-200/80 bg-white p-8 shadow-md shadow-neutral-200/70">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="text-xl font-semibold text-neutral-900">Recent activity</h2>
-            <p className="text-sm text-neutral-500">A quick snapshot of your release history.</p>
+            <p className="text-sm text-neutral-500">Keep an eye on the latest releases across all projects.</p>
           </div>
-          <Link href="/projects" className="text-sm font-medium text-neutral-600 underline-offset-4 hover:underline">
+          <Link
+            href="/projects"
+            className="text-sm font-semibold text-neutral-600 underline-offset-4 hover:text-neutral-900 hover:underline"
+          >
             Browse public changelog
           </Link>
         </div>
@@ -273,7 +317,7 @@ export default async function Dashboard() {
             {recentChangelogs.map((entry) => (
               <li
                 key={entry.id}
-                className="flex flex-col gap-3 rounded-2xl border border-neutral-200/80 bg-white/90 px-4 py-4 shadow-sm shadow-neutral-200/40 sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-3 rounded-2xl border border-neutral-200/80 bg-white/90 px-4 py-4 shadow-sm shadow-neutral-200/50 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
                   <p className="text-sm font-semibold text-neutral-800">
@@ -283,16 +327,16 @@ export default async function Dashboard() {
                     {entry.publishedAt ? "Published" : "Draft"} • {formatDate(entry.createdAt)}
                   </p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3 text-sm">
                   <Link
                     href={`/projects/${entry.project.slug}/versions/${entry.versionSlug}`}
-                    className="text-sm font-medium text-neutral-700 underline-offset-4 hover:underline"
+                    className="font-medium text-neutral-700 underline-offset-4 hover:underline"
                   >
                     View version
                   </Link>
                   <Link
                     href={`/projects/${entry.project.slug}`}
-                    className="text-sm text-neutral-500 underline-offset-4 hover:underline"
+                    className="text-neutral-500 underline-offset-4 hover:text-neutral-900 hover:underline"
                   >
                     Project home
                   </Link>

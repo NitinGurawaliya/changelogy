@@ -42,9 +42,9 @@ export default async function ProjectsPage() {
   });
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-white via-white to-neutral-100 px-6 py-16">
-      <section className="mx-auto flex w-full max-w-4xl flex-col items-center text-center">
-        <span className="rounded-full bg-neutral-900/90 px-4 py-1 text-xs font-semibold uppercase tracking-widest text-neutral-100">
+    <main className="min-h-screen bg-neutral-50 px-6 py-16">
+      <section className="mx-auto flex w-full max-w-5xl flex-col items-center text-center rounded-3xl border border-neutral-200/80 bg-white p-12 shadow-md shadow-neutral-200/60">
+        <span className="rounded-full bg-neutral-900 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-neutral-100">
           Public changelog
         </span>
         <h1 className="mt-6 text-4xl font-semibold tracking-tight text-neutral-900 md:text-5xl">
@@ -67,7 +67,7 @@ export default async function ProjectsPage() {
           projects.map((project) => (
             <article
               key={project.id}
-              className="group flex flex-col gap-4 rounded-3xl border border-neutral-200/80 bg-white/80 p-6 shadow-md shadow-neutral-200/60 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-neutral-200/80"
+              className="group flex flex-col gap-4 rounded-3xl border border-neutral-200/80 bg-white p-6 shadow-md shadow-neutral-200/60 transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-neutral-200/80"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
