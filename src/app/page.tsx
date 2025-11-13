@@ -19,7 +19,7 @@ export default function Home() {
         </div>
 
         <Button asChild size="lg" className="rounded-full px-8">
-          <Link href="/dashboard">Get started — it’s free</Link>
+          <Link href="/register">Get started — it’s free</Link>
         </Button>
 
         <div className="rounded-3xl border border-neutral-200/80 bg-white/70 p-6 shadow-sm backdrop-blur">

@@ -7,10 +7,93 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum ProjectVisibility {
+  PRIVATE
+  PUBLIC
+}
+
+model User {
+  id             String    @id @default(cuid())
+  name           String?
+  email          String?   @unique
+  emailVerified  DateTime?
+  image          String?
+  hashedPassword String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  projects       Project[]
+  changelogs     Changelog[]
+  accounts       Account[]
+  sessions       Session[]
+}
+
+model Project {
+  id          String             @id @default(cuid())
+  name        String
+  slug        String
+  description String?
+  visibility  ProjectVisibility  @default(PRIVATE)
+  ownerId     String
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  owner       User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  changelogs  Changelog[]
+
+  @@unique([ownerId, slug])
+  @@unique([ownerId, name])
+  @@index([slug])
+}
+
 model Changelog {
-  id          String   @id @default(cuid())
-  productName String
-  version     String   @default("1.0.0")
-  text        String
-  createdAt   DateTime @default(now())
+  id            String    @id @default(cuid())
+  projectId     String
+  createdById   String
+  versionLabel  String
+  versionSlug   String
+  title         String
+  summary       String?
+  content       String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  publishedAt   DateTime?
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy     User      @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, versionSlug])
+  @@index([versionSlug])
+}
+
+model Account {
+  id                      String  @id @default(cuid())
+  userId                  String
+  type                    String
+  provider                String
+  providerAccountId       String
+  refresh_token           String?
+  access_token            String?
+  expires_at              Int?
+  token_type              String?
+  scope                   String?
+  id_token                String?
+  session_state           String?
+  refresh_token_expires_in Int?
+  user                    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
 }
