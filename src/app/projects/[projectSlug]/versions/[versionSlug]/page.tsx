@@ -23,7 +23,7 @@ async function resolveParams(params: VersionPageParams) {
 }
 
 function formatDate(date: Date) {
-  return date.toLocaleDateString("hi-IN", {
+  return date.toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -64,8 +64,8 @@ export async function generateMetadata({ params }: { params: VersionPageParams }
 
   if (!changelog) {
     return {
-      title: "रिलीज़ नहीं मिली | Changelogy",
-      description: "यह संस्करण उपलब्ध नहीं है या निजी रखा गया है।",
+      title: "Release not found | Changelogy",
+      description: "This version is unavailable or private.",
     };
   }
 
@@ -114,16 +114,15 @@ export default async function VersionPage({ params }: { params: VersionPageParam
           </span>
           <h1 className="mt-6 text-4xl font-semibold tracking-tight text-neutral-900">{changelog.project.name}</h1>
           <p className="mt-4 max-w-xl text-base text-neutral-500">
-            {changelog.summary ??
-              "यह रिलीज़ आपके उपयोगकर्ताओं के लिए नई क्षमताएँ और परिष्कृत अनुभव लेकर आती है।"}
+            {changelog.summary ?? "This release brings new capabilities and a refined experience for your users."}
           </p>
           <p className="mt-6 text-sm text-neutral-400">
-            प्रकाशित:
+            Published:
             <time dateTime={publishedDate.toISOString()} className="ml-1 font-medium text-neutral-600">
               {formatDate(publishedDate)}
             </time>
             {changelog.createdBy?.name ? (
-              <span className="ml-2 text-neutral-500">• लेखक: {changelog.createdBy.name}</span>
+              <span className="ml-2 text-neutral-500">• Author: {changelog.createdBy.name}</span>
             ) : null}
           </p>
         </section>
@@ -140,20 +139,20 @@ export default async function VersionPage({ params }: { params: VersionPageParam
         <footer className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-neutral-200/80 bg-white/90 px-6 py-5 text-sm text-neutral-500 shadow-md shadow-neutral-200/60">
           <div>
             <p className="font-semibold text-neutral-700">{changelog.project.name}</p>
-            <p>प्रोजेक्ट के सभी अपडेट्स एक ही स्थान पर।</p>
+            <p>All of the project updates in a single place.</p>
           </div>
           <div className="flex items-center gap-3">
             <Link
               href={`/projects/${changelog.project.slug}`}
               className="rounded-full border border-neutral-200 px-4 py-2 text-sm font-semibold text-neutral-700 hover:border-neutral-300 hover:text-neutral-900"
             >
-              प्रोजेक्ट होम
+              Project home
             </Link>
             <Link
               href="/projects"
               className="rounded-full border border-neutral-200 px-4 py-2 text-sm text-neutral-600 hover:border-neutral-300 hover:text-neutral-900"
             >
-              और प्रोजेक्ट देखें
+              Explore more projects
             </Link>
           </div>
         </footer>

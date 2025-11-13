@@ -8,13 +8,13 @@ import { cn } from "@/lib/utils";
 const navigationLinks = [
   {
     href: "/dashboard",
-    label: "पहल",
-    description: "आपके सभी प्रोडक्ट प्रोजेक्ट और रिलीज़",
+    label: "Overview",
+    description: "All of your product projects and releases",
   },
   {
     href: "/dashboard#new-project",
-    label: "नया प्रोजेक्ट",
-    description: "तुरंत एक नया changelog स्पेस बनाएँ",
+    label: "New project",
+    description: "Spin up a fresh changelog space instantly",
   },
 ];
 
@@ -33,7 +33,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             Changelogy
           </Link>
           <span className="rounded-full border border-neutral-200/80 px-2.5 py-1 text-xs font-medium text-neutral-500">
-            बीटा
+            Beta
           </span>
         </div>
 
@@ -52,12 +52,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
         <div className="mt-auto space-y-4">
           <div className="rounded-2xl border border-neutral-200/80 bg-white/80 p-4 text-sm shadow-inner shadow-neutral-200/50">
-            <p className="font-medium text-neutral-700">{session.user.email ?? "आपका अकाउंट"}</p>
+            <p className="font-medium text-neutral-700">{session.user.email ?? "Your account"}</p>
             <p className="mt-1 text-xs text-neutral-500">
-              अपनी टीम को अपडेट्स के साथ जोड़े रखें। हर प्रोजेक्ट के लिए अलग changelog बनाएं।
+              Keep your team aligned with updates. Create a dedicated changelog for every project.
             </p>
           </div>
-          <SignOutButton variant="outline">साइन आउट</SignOutButton>
+          <SignOutButton variant="outline">Sign out</SignOutButton>
         </div>
       </aside>
 
@@ -65,9 +65,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <header className="sticky top-0 z-20 border-b border-neutral-200/70 bg-white/70 backdrop-blur">
           <div className="flex flex-col gap-4 px-6 py-6 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-2xl font-semibold text-neutral-900">डैशबोर्ड</h1>
+              <h1 className="text-2xl font-semibold text-neutral-900">Dashboard</h1>
               <p className="mt-1 text-sm text-neutral-500">
-                प्रोजेक्ट्स को ट्रैक करें, रिलीज़ शिप करें, और अपने ग्राहकों को अपडेट रखें।
+                Track projects, ship releases, and keep your customers in the loop.
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -78,7 +78,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
                   "rounded-full border-dashed px-5 text-xs font-semibold uppercase tracking-widest text-neutral-600",
                 )}
               >
-                सार्वजनिक पेज देखें
+                View public gallery
               </Link>
               <div className="hidden md:block">
                 <Link
@@ -88,7 +88,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
                     "rounded-full bg-neutral-900 px-5 text-xs font-semibold uppercase tracking-widest text-neutral-100 shadow-sm shadow-neutral-800/30",
                   )}
                 >
-                  नया लॉन्च
+                  Launch project
                 </Link>
               </div>
             </div>

@@ -20,7 +20,7 @@ export async function GET(_request: Request, { params }: { params: { projectId: 
   const userId = await requireUserId();
 
   if (!userId) {
-    return NextResponse.json({ error: "अनधिकृत अनुरोध।" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized request." }, { status: 401 });
   }
 
   const project = await prisma.project.findFirst({
@@ -39,7 +39,7 @@ export async function GET(_request: Request, { params }: { params: { projectId: 
   });
 
   if (!project) {
-    return NextResponse.json({ error: "प्रोजेक्ट नहीं मिला।" }, { status: 404 });
+    return NextResponse.json({ error: "Project not found." }, { status: 404 });
   }
 
   return NextResponse.json({ project });
@@ -49,7 +49,7 @@ export async function POST(request: Request, { params }: { params: { projectId: 
   const userId = await requireUserId();
 
   if (!userId) {
-    return NextResponse.json({ error: "अनधिकृत अनुरोध।" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized request." }, { status: 401 });
   }
 
   const project = await prisma.project.findFirst({
@@ -65,7 +65,7 @@ export async function POST(request: Request, { params }: { params: { projectId: 
   });
 
   if (!project) {
-    return NextResponse.json({ error: "प्रोजेक्ट नहीं मिला।" }, { status: 404 });
+    return NextResponse.json({ error: "Project not found." }, { status: 404 });
   }
 
   const payload = await request.json();
@@ -79,7 +79,7 @@ export async function POST(request: Request, { params }: { params: { projectId: 
   const cleanedContent = cleanChangelogText(content);
 
   if (!cleanedContent) {
-    return NextResponse.json({ error: "कंटेंट खाली नहीं हो सकता।" }, { status: 400 });
+    return NextResponse.json({ error: "Content cannot be empty." }, { status: 400 });
   }
 
   const versionSlug = await generateUniqueVersionSlug(project.id, versionLabel);

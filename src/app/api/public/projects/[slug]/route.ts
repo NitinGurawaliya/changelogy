@@ -33,7 +33,7 @@ export async function GET(_request: Request, { params }: { params: { slug: strin
   });
 
   if (!project) {
-    return NextResponse.json({ error: "प्रोजेक्ट नहीं मिला।" }, { status: 404 });
+    return NextResponse.json({ error: "Project not found." }, { status: 404 });
   }
 
   return NextResponse.json({ project });

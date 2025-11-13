@@ -58,11 +58,11 @@ export function RegisterForm() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        setError(typeof data.error === "string" ? data.error : "खाता नहीं बनाया जा सका।");
+        setError(typeof data.error === "string" ? data.error : "Could not create the account.");
         return;
       }
 
-      setSuccess("खाता सफलतापूर्वक बना।");
+      setSuccess("Account created successfully.");
 
       const result = await signIn("credentials", {
         redirect: false,
@@ -83,13 +83,13 @@ export function RegisterForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="name">पूरा नाम</Label>
+        <Label htmlFor="name">Full name</Label>
         <Input
           id="name"
           name="name"
           value={formState.name}
           onChange={handleChange}
-          placeholder="आपका नाम"
+          placeholder="Your name"
           minLength={2}
           maxLength={120}
           required
@@ -97,7 +97,7 @@ export function RegisterForm() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="email">ईमेल</Label>
+        <Label htmlFor="email">Email</Label>
         <Input
           id="email"
           name="email"
@@ -111,7 +111,7 @@ export function RegisterForm() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="password">पासवर्ड</Label>
+        <Label htmlFor="password">Password</Label>
         <Input
           id="password"
           name="password"
@@ -119,7 +119,7 @@ export function RegisterForm() {
           value={formState.password}
           onChange={handleChange}
           autoComplete="new-password"
-          placeholder="कम से कम 8 अक्षर"
+          placeholder="At least 8 characters"
           minLength={8}
           required
         />
@@ -129,7 +129,7 @@ export function RegisterForm() {
       {success ? <p className="text-sm text-emerald-500">{success}</p> : null}
 
       <Button type="submit" className="w-full" disabled={isPending || isSubmitDisabled}>
-        {isPending ? "खाता बना रहे हैं..." : "खाता बनाएँ"}
+        {isPending ? "Creating account..." : "Create account"}
       </Button>
     </form>
   );

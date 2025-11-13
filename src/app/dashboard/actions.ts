@@ -7,17 +7,23 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { cleanChangelogText } from "@/lib/clean-changelog";
 import { buildSummaryFromContent, generateUniqueProjectSlug, generateUniqueVersionSlug } from "@/lib/projects";
+import {
+  type ProjectActionState,
+  type ChangelogActionState,
+  initialProjectActionState,
+  initialChangelogActionState,
+} from "./action-state";
 
 const projectSchema = z.object({
-  name: z.string().min(2, "नाम बहुत छोटा है।").max(80, "नाम 80 अक्षरों से अधिक नहीं हो सकता।"),
-  description: z.string().max(500, "विवरण 500 अक्षरों तक सीमित है।").optional().or(z.literal("")),
+  name: z.string().min(2, "Name is too short.").max(80, "Name cannot exceed 80 characters."),
+  description: z.string().max(500, "Description can be at most 500 characters.").optional().or(z.literal("")),
   visibility: z.enum(["PRIVATE", "PUBLIC"]).optional(),
 });
 
 const changelogSchema = z.object({
   projectId: z.string().cuid(),
-  versionLabel: z.string().min(1, "संस्करण नाम आवश्यक है।").max(60),
-  content: z.string().min(10, "कम से कम 10 अक्षर का विवरण दें।"),
+  versionLabel: z.string().min(1, "Version label is required.").max(60, "Version label cannot exceed 60 characters."),
+  content: z.string().min(10, "Provide at least 10 characters of detail."),
   publish: z.boolean().optional(),
 });
 
@@ -31,27 +37,6 @@ async function ensureAuthenticatedUser() {
   return session.user.id;
 }
 
-type ProjectActionState = {
-  status: "idle" | "success" | "error";
-  message?: string;
-  slug?: string;
-};
-
-type ChangelogActionState = {
-  status: "idle" | "success" | "error";
-  message?: string;
-  projectSlug?: string;
-  versionSlug?: string;
-};
-
-export const initialProjectActionState: ProjectActionState = {
-  status: "idle",
-};
-
-export const initialChangelogActionState: ChangelogActionState = {
-  status: "idle",
-};
-
 export async function createProjectAction(
   _prevState: ProjectActionState,
   formData: FormData,
@@ -64,7 +49,7 @@ export async function createProjectAction(
   });
 
   if (!parsed.success) {
-    const error = parsed.error.flatten().formErrors.join("\n") || "प्रोजेक्ट नहीं बनाया जा सका।";
+    const error = parsed.error.flatten().formErrors.join("\n") || "Project could not be created.";
     return { status: "error", message: error };
   }
 
@@ -86,7 +71,7 @@ export async function createProjectAction(
 
   return {
     status: "success",
-    message: "प्रोजेक्ट सफलतापूर्वक बना।",
+    message: "Project created successfully.",
     slug: project.slug,
   };
 }
@@ -104,7 +89,7 @@ export async function createChangelogAction(
   });
 
   if (!parsed.success) {
-    const error = parsed.error.flatten().formErrors.join("\n") || "चangelog नहीं बनाया जा सका।";
+    const error = parsed.error.flatten().formErrors.join("\n") || "Changelog could not be created.";
     return { status: "error", message: error };
   }
 
@@ -125,7 +110,7 @@ export async function createChangelogAction(
   if (!project) {
     return {
       status: "error",
-      message: "प्रोजेक्ट नहीं मिला या आपके पास इसकी अनुमति नहीं है।",
+      message: "Project not found or you do not have permission to modify it.",
     };
   }
 
@@ -134,7 +119,7 @@ export async function createChangelogAction(
   if (!cleanedContent) {
     return {
       status: "error",
-      message: "कंटेंट खाली नहीं हो सकता।",
+      message: "Content cannot be empty.",
     };
   }
 
@@ -160,7 +145,7 @@ export async function createChangelogAction(
 
   return {
     status: "success",
-    message: "नया वर्ज़न तैयार हो गया।",
+    message: "New version is ready.",
     projectSlug: project.slug,
     versionSlug,
   };

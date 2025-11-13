@@ -26,7 +26,7 @@ export function SignOutButton({ variant = "ghost", children }: SignOutButtonProp
       }
       disabled={isPending}
     >
-      {children ?? (isPending ? "साइन आउट हो रहा है..." : "साइन आउट")}
+      {children ?? (isPending ? "Signing out..." : "Sign out")}
     </Button>
   );
 }

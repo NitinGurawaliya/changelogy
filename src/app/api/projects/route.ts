@@ -24,7 +24,7 @@ export async function GET() {
   const userId = await requireUserId();
 
   if (!userId) {
-    return NextResponse.json({ error: "अनधिकृत अनुरोध।" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized request." }, { status: 401 });
   }
 
   const projects = await prisma.project.findMany({
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
   const userId = await requireUserId();
 
   if (!userId) {
-    return NextResponse.json({ error: "अनधिकृत अनुरोध।" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized request." }, { status: 401 });
   }
 
   const payload = await request.json();

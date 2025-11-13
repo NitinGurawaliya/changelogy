@@ -19,7 +19,7 @@ export function LoginForm() {
     const password = formData.get("password");
 
     if (typeof email !== "string" || typeof password !== "string") {
-      setError("कृपया मान्य ईमेल और पासवर्ड दर्ज करें।");
+      setError("Please provide a valid email and password.");
       return;
     }
 
@@ -32,7 +32,7 @@ export function LoginForm() {
       });
 
       if (result?.error) {
-        setError("लॉगिन विवरण मेल नहीं खाते।");
+        setError("These login details do not match our records.");
         return;
       }
 
@@ -44,12 +44,12 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="email">ईमेल</Label>
+        <Label htmlFor="email">Email</Label>
         <Input id="email" name="email" type="email" autoComplete="email" placeholder="you@example.com" required />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="password">पासवर्ड</Label>
+        <Label htmlFor="password">Password</Label>
         <Input
           id="password"
           name="password"
@@ -64,7 +64,7 @@ export function LoginForm() {
       {error ? <p className="text-sm text-red-500">{error}</p> : null}
 
       <Button type="submit" className="w-full" disabled={isPending}>
-        {isPending ? "लॉगिन जारी है..." : "डैशबोर्ड में प्रवेश करें"}
+        {isPending ? "Signing you in..." : "Enter dashboard"}
       </Button>
     </form>
   );

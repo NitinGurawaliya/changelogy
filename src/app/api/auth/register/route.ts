@@ -16,7 +16,7 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     return NextResponse.json(
       {
-        error: "अमान्य इनपुट",
+        error: "Invalid input",
         details: parsed.error.flatten(),
       },
       { status: 400 },
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
   if (existing) {
     return NextResponse.json(
       {
-        error: "यह ईमेल पहले से पंजीकृत है।",
+        error: "This email is already registered.",
       },
       { status: 409 },
     );
