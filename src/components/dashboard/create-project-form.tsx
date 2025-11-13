@@ -8,15 +8,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-export function CreateProjectForm() {
+type CreateProjectFormProps = {
+  onSuccess?: () => void;
+};
+
+export function CreateProjectForm({ onSuccess }: CreateProjectFormProps) {
   const [state, formAction] = useActionState(createProjectAction, initialProjectActionState);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (state.status === "success") {
       formRef.current?.reset();
+      onSuccess?.();
     }
-  }, [state.status]);
+  }, [onSuccess, state.status]);
 
   return (
     <form ref={formRef} className="space-y-6" action={formAction}>
@@ -44,7 +49,7 @@ export function CreateProjectForm() {
             id="visibility"
             name="visibility"
             defaultValue="PUBLIC"
-            className="h-10 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-700 focus:border-neutral-400 focus:outline-none"
+            className="h-10 w-full rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-700 shadow-sm focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-200/60"
           >
             <option value="PUBLIC">Public</option>
             <option value="PRIVATE">Private</option>

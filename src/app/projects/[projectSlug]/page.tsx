@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
+import { ShareLinkButton } from "@/components/share-link-button";
+import { getBaseUrl } from "@/lib/url";
 
 type ProjectPageProps = {
   params: Promise<{ projectSlug: string }>;
@@ -104,107 +106,128 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   const publishedChangelogs = project.changelogs.filter((entry) => entry.publishedAt);
   const draftChangelogs = project.changelogs.filter((entry) => !entry.publishedAt);
   const isOwner = session?.user?.id === project.ownerId;
+  const baseUrl = getBaseUrl();
+  const projectShareUrl = `${baseUrl}/projects/${project.slug}`;
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-white via-white to-neutral-100 px-6 py-16">
-      <section className="mx-auto flex w-full max-w-4xl flex-col gap-6 rounded-3xl border border-neutral-200/80 bg-white/90 p-10 text-left shadow-xl shadow-neutral-200/60">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <span className="inline-flex items-center rounded-full bg-neutral-900/90 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-neutral-100">
-              {project.visibility === "PUBLIC" ? "Public" : "Private"}
-            </span>
-            <h1 className="mt-4 text-4xl font-semibold text-neutral-900">{project.name}</h1>
-            <p className="mt-2 text-sm text-neutral-500">
-              {project.description ?? "All updates related to this project's evolution appear here."}
-            </p>
+    <main className="min-h-screen bg-neutral-50 px-4 py-10 sm:px-6 sm:py-16">
+      <section className="mx-auto w-full max-w-4xl">
+        <div className="rounded-3xl border border-neutral-200/70 bg-white/90 p-6 shadow-lg shadow-neutral-200/60 sm:p-10">
+          <div className="flex flex-col gap-6 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+            <div className="max-w-xl space-y-4">
+              <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.35em] text-neutral-500">
+                <span>{project.visibility === "PUBLIC" ? "Public project" : "Private project"}</span>
+                <span className="inline-block h-1 w-1 rounded-full bg-neutral-300" />
+                <span>Since {formatDate(project.createdAt)}</span>
+              </div>
+              <div>
+                <h1 className="text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl">{project.name}</h1>
+                <p className="mt-3 text-sm text-neutral-500 sm:text-base">
+                  {project.description ?? "Follow every iteration, launch, and improvement for this product."}
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="text-sm text-neutral-500">
-            <p>Started: {formatDate(project.createdAt)}</p>
-            {project.owner?.name ? <p>Owner: {project.owner.name}</p> : null}
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-3 text-sm text-neutral-500">
-          <span className="rounded-full bg-neutral-100 px-3 py-1">
-            Published updates: {publishedChangelogs.length}
-          </span>
-          {isOwner ? (
-            <span className="rounded-full bg-neutral-100 px-3 py-1">Drafts: {draftChangelogs.length}</span>
-          ) : null}
-          <Link
-            href="/dashboard"
-            className="rounded-full border border-neutral-200 px-3 py-1 font-medium text-neutral-700 underline-offset-4 hover:underline"
-          >
-            Go to dashboard
-          </Link>
+          {/* <div className="mt-6 flex flex-wrap items-center gap-3 text-sm text-neutral-500">
+            <ShareLinkButton
+              url={projectShareUrl}
+              triggerLabel="Share project"
+              triggerVariant="outline"
+              triggerSize="sm"
+              modalTitle="Share Project Link"
+              modalDescription={`Copy or share the ${project.name} changelog homepage.`}
+              shareMessage={`Follow ${project.name} updates`}
+              copyButtonLabel="Copy project link"
+              className="rounded-full"
+            />
+            <Link
+              href="/projects"
+              className="rounded-full border border-neutral-200 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-900"
+            >
+              Back to projects
+            </Link>
+            <span className="text-xs font-semibold uppercase tracking-[0.25em] text-neutral-400">Latest releases below</span>
+          </div> */}
         </div>
       </section>
 
-      <section className="mx-auto mt-12 flex w-full max-w-5xl flex-col gap-10">
-        <div className="space-y-4">
-          <h2 className="text-2xl font-semibold text-neutral-900">All published releases</h2>
-          {publishedChangelogs.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-neutral-200/80 bg-white/80 p-12 text-center shadow-inner shadow-neutral-200/50">
-              <h3 className="text-lg font-semibold text-neutral-800">No public release is available yet.</h3>
-              {isOwner ? (
-                <p className="mt-2 text-sm text-neutral-500">
-                  Draft a version and publish it. Once live, it will appear here instantly.
-                </p>
-              ) : (
-                <p className="mt-2 text-sm text-neutral-500">
-                  Please check back soon. As soon as a release is published it will be listed here.
-                </p>
-              )}
-            </div>
-          ) : (
-            <ul className="space-y-4">
-              {publishedChangelogs.map((entry) => (
-                <li
-                  key={entry.id}
-                  className="rounded-3xl border border-neutral-200/80 bg-white/90 p-6 shadow-sm shadow-neutral-200/50 transition-shadow hover:shadow-md hover:shadow-neutral-200/70"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <h3 className="text-xl font-semibold text-neutral-900">{entry.versionLabel}</h3>
-                      <p className="text-xs text-neutral-500">
-                        Published on: {entry.publishedAt ? formatDate(entry.publishedAt) : formatDate(entry.createdAt)}
-                      </p>
-                    </div>
-                    <Link
-                      href={`/projects/${project.slug}/versions/${entry.versionSlug}`}
-                      className="inline-flex items-center rounded-full border border-neutral-200 px-4 py-2 text-sm font-semibold text-neutral-700 hover:border-neutral-300 hover:text-neutral-900"
-                    >
-                      View release notes
-                    </Link>
-                  </div>
-                  {entry.summary ? <p className="mt-4 text-sm text-neutral-600">{entry.summary}</p> : null}
-                </li>
-              ))}
-            </ul>
-          )}
+      <section id="published-releases" className="mx-auto mt-10 w-full max-w-5xl space-y-6 sm:mt-12">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-semibold text-neutral-900">All releases</h2>
+          </div>
         </div>
 
-        {isOwner && draftChangelogs.length > 0 ? (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-neutral-900">Draft releases (only visible to you)</h2>
-            <ul className="space-y-3">
-              {draftChangelogs.map((entry) => (
-                <li
-                  key={entry.id}
-                  className="rounded-2xl border border-dashed border-neutral-200/80 bg-white/90 px-4 py-4 shadow-sm shadow-neutral-200/40"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-3 text-sm font-semibold text-neutral-800">
-                    <span>{entry.versionLabel}</span>
-                    <span className="text-xs text-neutral-500">Draft • {formatDate(entry.createdAt)}</span>
-                  </div>
-                  {entry.summary ? <p className="mt-2 text-xs text-neutral-500">{entry.summary}</p> : null}
+        {publishedChangelogs.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-neutral-200/80 bg-white/80 p-8 text-center shadow-inner shadow-neutral-200/50 sm:p-12">
+            <h3 className="text-lg font-semibold text-neutral-800">No public releases yet.</h3>
+            <p className="mt-2 text-sm text-neutral-500">
+              As soon as a release is published, it will appear right here.
+            </p>
+          </div>
+        ) : (
+          <ul className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
+            {publishedChangelogs.map((entry) => {
+              const publishedDate = entry.publishedAt ?? entry.createdAt;
+              const preview =
+                entry.summary && entry.summary.length > 140
+                  ? `${entry.summary.slice(0, 137)}…`
+                  : entry.summary ?? "Open to read the full release story.";
+
+              return (
+                <li key={entry.id}>
                   <Link
                     href={`/projects/${project.slug}/versions/${entry.versionSlug}`}
-                    className="mt-3 inline-flex text-xs font-medium text-neutral-600 underline-offset-4 hover:underline"
+                    className="group block h-full rounded-2xl border border-neutral-200/80 bg-white/80 p-4 text-left shadow-sm shadow-neutral-200/50 transition hover:-translate-y-1 hover:border-neutral-300 hover:shadow-lg hover:shadow-neutral-200/70 sm:p-5"
                   >
-                    View draft preview
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="space-y-1">
+                        <h3 className="text-lg font-semibold text-neutral-900 group-hover:text-neutral-950">
+                          {entry.versionLabel}
+                        </h3>
+                        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-neutral-500 group-hover:text-neutral-700">
+                          {formatDate(publishedDate)}
+                        </p>
+                      </div>
+                      <span className="mt-1 inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 text-xs font-semibold text-neutral-500 transition group-hover:border-neutral-300 group-hover:text-neutral-800">
+                        →
+                      </span>
+                    </div>
                   </Link>
                 </li>
-              ))}
+              );
+            })}
+          </ul>
+        )}
+
+        {isOwner && draftChangelogs.length > 0 ? (
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold text-neutral-900">Drafts (visible only to you)</h3>
+            <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {draftChangelogs.map((entry) => {
+                const preview =
+                  entry.summary && entry.summary.length > 120
+                    ? `${entry.summary.slice(0, 117)}…`
+                    : entry.summary ?? "Continue writing your notes and publish when ready.";
+
+                return (
+                  <li key={entry.id}>
+                    <Link
+                      href={`/projects/${project.slug}/versions/${entry.versionSlug}`}
+                      className="group block h-full rounded-2xl border border-dashed border-neutral-200 bg-white/80 p-4 text-left shadow-sm transition hover:border-neutral-300 hover:shadow-md sm:p-5"
+                    >
+                      <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.3em] text-neutral-500">
+                        <span>Draft</span>
+                        <span>{formatDate(entry.createdAt)}</span>
+                      </div>
+                      <h4 className="mt-3 text-base font-semibold text-neutral-900 group-hover:text-neutral-950">
+                        {entry.versionLabel}
+                      </h4>
+                      <p className="mt-2 text-sm text-neutral-500">{preview}</p>
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         ) : null}
