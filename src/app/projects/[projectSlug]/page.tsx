@@ -3,8 +3,6 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
-import { ShareLinkButton } from "@/components/share-link-button";
-import { getBaseUrl } from "@/lib/url";
 
 type ProjectPageProps = {
   params: Promise<{ projectSlug: string }>;
@@ -47,6 +45,7 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
     select: {
       name: true,
       description: true,
+      logoUrl: true,
     },
   });
 
@@ -57,10 +56,19 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
     };
   }
 
-  return {
+  const metadata: Metadata = {
     title: `${project.name} changelog | Changelogy`,
     description: project.description ?? `Discover every update and release for ${project.name} in one place.`,
   };
+
+  if (project.logoUrl) {
+    metadata.icons = {
+      icon: [{ url: project.logoUrl }],
+      shortcut: [{ url: project.logoUrl }],
+    };
+  }
+
+  return metadata;
 }
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
@@ -106,25 +114,49 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   const publishedChangelogs = project.changelogs.filter((entry) => entry.publishedAt);
   const draftChangelogs = project.changelogs.filter((entry) => !entry.publishedAt);
   const isOwner = session?.user?.id === project.ownerId;
-  const baseUrl = getBaseUrl();
-  const projectShareUrl = `${baseUrl}/projects/${project.slug}`;
 
   return (
     <main className="min-h-screen bg-neutral-50 px-4 py-10 sm:px-6 sm:py-16">
       <section className="mx-auto w-full max-w-4xl">
         <div className="rounded-3xl border border-neutral-200/70 bg-white/90 p-6 shadow-lg shadow-neutral-200/60 sm:p-10">
           <div className="flex flex-col gap-6 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
-            <div className="max-w-xl space-y-4">
-              <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.35em] text-neutral-500">
-                <span>{project.visibility === "PUBLIC" ? "Public project" : "Private project"}</span>
-                <span className="inline-block h-1 w-1 rounded-full bg-neutral-300" />
-                <span>Since {formatDate(project.createdAt)}</span>
-              </div>
-              <div>
-                <h1 className="text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl">{project.name}</h1>
-                <p className="mt-3 text-sm text-neutral-500 sm:text-base">
-                  {project.description ?? "Follow every iteration, launch, and improvement for this product."}
-                </p>
+            <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-start">
+              {project.logoUrl ? (
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm shadow-neutral-200/60">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={project.logoUrl}
+                    alt={`${project.name} logo`}
+                    className="h-12 w-12 object-contain"
+                    loading="lazy"
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+              ) : null}
+
+              <div className="max-w-xl space-y-4">
+                <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.35em] text-neutral-500">
+                  <span>{project.visibility === "PUBLIC" ? "Public project" : "Private project"}</span>
+                  <span className="inline-block h-1 w-1 rounded-full bg-neutral-300" />
+                  <span>Since {formatDate(project.createdAt)}</span>
+                </div>
+                <div>
+                  <h1 className="text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl">{project.name}</h1>
+                  <p className="mt-3 text-sm text-neutral-500 sm:text-base">
+                    {project.description ?? "Follow every iteration, launch, and improvement for this product."}
+                  </p>
+                  {project.websiteUrl ? (
+                    <Link
+                      href={project.websiteUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-neutral-600 transition hover:text-neutral-900"
+                    >
+                      Visit product site
+                      <span aria-hidden="true">↗</span>
+                    </Link>
+                  ) : null}
+                </div>
               </div>
             </div>
           </div>
