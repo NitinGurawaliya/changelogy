@@ -20,7 +20,12 @@ export function CreateVersionForm({ projectId, projectSlug, projectName }: Creat
   const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
+<<<<<<< Updated upstream
     if (state.status === "success" && state.projectSlug === projectSlug) {
+=======
+
+    if (state.status === "success" && state.projectSlug === projectSlug && state.versionSlug) {
+>>>>>>> Stashed changes
       formRef.current?.reset();
     }
   }, [projectSlug, state]);
