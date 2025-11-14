@@ -119,67 +119,46 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     <main className="min-h-screen bg-neutral-50 px-4 py-10 sm:px-6 sm:py-16">
       <section className="mx-auto w-full max-w-4xl">
         <div className="rounded-3xl border border-neutral-200/70 bg-white/90 p-6 shadow-lg shadow-neutral-200/60 sm:p-10">
-          <div className="flex flex-col gap-6 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
-            <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-start">
-              {project.logoUrl ? (
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm shadow-neutral-200/60">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={project.logoUrl}
-                    alt={`${project.name} logo`}
-                    className="h-12 w-12 object-contain"
-                    loading="lazy"
-                    referrerPolicy="no-referrer"
-                  />
-                </div>
-              ) : null}
-
-              <div className="max-w-xl space-y-4">
-                <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.35em] text-neutral-500">
-                  <span>{project.visibility === "PUBLIC" ? "Public project" : "Private project"}</span>
-                  <span className="inline-block h-1 w-1 rounded-full bg-neutral-300" />
-                  <span>Since {formatDate(project.createdAt)}</span>
-                </div>
-                <div>
-                  <h1 className="text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl">{project.name}</h1>
-                  <p className="mt-3 text-sm text-neutral-500 sm:text-base">
-                    {project.description ?? "Follow every iteration, launch, and improvement for this product."}
-                  </p>
-                  {project.websiteUrl ? (
-                    <Link
-                      href={project.websiteUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-neutral-600 transition hover:text-neutral-900"
-                    >
-                      Visit product site
-                      <span aria-hidden="true">↗</span>
-                    </Link>
-                  ) : null}
-                </div>
+          {/* Logo and Date Row */}
+          <div className="flex items-center gap-4">
+            {project.logoUrl ? (
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm shadow-neutral-200/60">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={project.logoUrl}
+                  alt={`${project.name} logo`}
+                  className="h-12 w-12 object-contain"
+                  loading="lazy"
+                  referrerPolicy="no-referrer"
+                />
               </div>
+            ) : null}
+
+            <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.35em] text-neutral-500">
+              <span>{project.visibility === "PUBLIC" ? "Public project" : "Private project"}</span>
+              <span className="inline-block h-1 w-1 rounded-full bg-neutral-300" />
+              <span>Since {formatDate(project.createdAt)}</span>
             </div>
           </div>
-          {/* <div className="mt-6 flex flex-wrap items-center gap-3 text-sm text-neutral-500">
-            <ShareLinkButton
-              url={projectShareUrl}
-              triggerLabel="Share project"
-              triggerVariant="outline"
-              triggerSize="sm"
-              modalTitle="Share Project Link"
-              modalDescription={`Copy or share the ${project.name} changelog homepage.`}
-              shareMessage={`Follow ${project.name} updates`}
-              copyButtonLabel="Copy project link"
-              className="rounded-full"
-            />
-            <Link
-              href="/projects"
-              className="rounded-full border border-neutral-200 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-900"
-            >
-              Back to projects
-            </Link>
-            <span className="text-xs font-semibold uppercase tracking-[0.25em] text-neutral-400">Latest releases below</span>
-          </div> */}
+
+          {/* Title, Description and Button */}
+          <div className="mt-6 space-y-4">
+            <h1 className="text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl">{project.name}</h1>
+            <p className="text-sm text-neutral-500 sm:text-base">
+              {project.description ?? "Follow every iteration, launch, and improvement for this product."}
+            </p>
+            {project.websiteUrl ? (
+              <Link
+                href={project.websiteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-sm text-neutral-400 transition hover:text-neutral-600"
+              >
+                Visit product site
+                <span aria-hidden="true">↗</span>
+              </Link>
+            ) : null}
+          </div>
         </div>
       </section>
 
