@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { cleanChangelogText } from "@/lib/clean-changelog";
 import { buildSummaryFromContent, generateUniqueProjectSlug, generateUniqueVersionSlug } from "@/lib/projects";
+import { fetchSiteBranding, normalizeWebsiteUrl } from "@/lib/site-metadata";
 import {
   type ProjectActionState,
   type ChangelogActionState,
@@ -18,6 +19,19 @@ const projectSchema = z.object({
   name: z.string().min(2, "Name is too short.").max(80, "Name cannot exceed 80 characters."),
   description: z.string().max(500, "Description can be at most 500 characters.").optional().or(z.literal("")),
   visibility: z.enum(["PRIVATE", "PUBLIC"]).optional(),
+  websiteUrl: z
+    .string()
+    .min(1, "Website URL is required.")
+    .transform((value) => value.trim())
+    .refine((value) => {
+      try {
+        normalizeWebsiteUrl(value);
+        return true;
+      } catch {
+        return false;
+      }
+    }, "Please provide a valid website URL.")
+    .transform((value) => normalizeWebsiteUrl(value)),
 });
 
 const changelogSchema = z.object({
@@ -46,6 +60,7 @@ export async function createProjectAction(
     name: formData.get("name"),
     description: formData.get("description"),
     visibility: formData.get("visibility"),
+    websiteUrl: formData.get("websiteUrl"),
   });
 
   if (!parsed.success) {
@@ -53,7 +68,7 @@ export async function createProjectAction(
     return { status: "error", message: error };
   }
 
-  const { name, description, visibility } = parsed.data;
+  const { name, description, visibility, websiteUrl } = parsed.data;
   const slug = await generateUniqueProjectSlug(userId, name);
 
   const existingProject = await prisma.project.findFirst({
@@ -71,6 +86,17 @@ export async function createProjectAction(
     };
   }
 
+  let resolvedWebsiteUrl = websiteUrl;
+  let projectLogoUrl: string | null = null;
+
+  try {
+    const branding = await fetchSiteBranding(websiteUrl);
+    resolvedWebsiteUrl = branding.websiteUrl || websiteUrl;
+    projectLogoUrl = branding.logoUrl ?? null;
+  } catch (error) {
+    console.warn("Failed to fetch site branding for project:", websiteUrl, error);
+  }
+
   const project = await prisma.project.create({
     data: {
       name,
@@ -78,6 +104,8 @@ export async function createProjectAction(
       description: description?.trim() ? description.trim() : null,
       visibility: visibility === "PUBLIC" ? "PUBLIC" : "PRIVATE",
       ownerId: userId,
+      websiteUrl: resolvedWebsiteUrl,
+      logoUrl: projectLogoUrl,
     },
   });
 

@@ -23,49 +23,64 @@ export function CreateProjectForm({ onSuccess }: CreateProjectFormProps) {
     }
   }, [onSuccess, state.status]);
 
-  return (
-    <form ref={formRef} className="space-y-6" action={formAction}>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="name">Project name</Label>
-          <Input id="name" name="name" placeholder="e.g. Nova Analytics" required maxLength={80} />
+    return (
+      <form ref={formRef} className="space-y-6" action={formAction}>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="name">Project name</Label>
+            <Input id="name" name="name" placeholder="e.g. Nova Analytics" required maxLength={80} />
+          </div>
+
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="websiteUrl">Project website</Label>
+            <Input
+              id="websiteUrl"
+              name="websiteUrl"
+              type="url"
+              inputMode="url"
+              placeholder="https://example.com"
+              required
+            />
+            <p className="text-xs text-neutral-500">
+              We&apos;ll fetch the site icon to personalize your project page.
+            </p>
+          </div>
+
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="description">Short description</Label>
+            <Textarea
+              id="description"
+              name="description"
+              placeholder="What problem does this project solve?"
+              rows={4}
+              maxLength={500}
+            />
+            <p className="text-xs text-neutral-500">This appears on your public changelog homepage.</p>
+          </div>
+
+          <div className="space-y-2 sm:col-span-1">
+            <Label htmlFor="visibility">Visibility</Label>
+            <select
+              id="visibility"
+              name="visibility"
+              defaultValue="PUBLIC"
+              className="h-10 w-full rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-700 shadow-sm focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-200/60"
+            >
+              <option value="PUBLIC">Public</option>
+              <option value="PRIVATE">Private</option>
+            </select>
+          </div>
         </div>
 
-        <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="description">Short description</Label>
-          <Textarea
-            id="description"
-            name="description"
-            placeholder="What problem does this project solve?"
-            rows={4}
-            maxLength={500}
-          />
-          <p className="text-xs text-neutral-500">This appears on your public changelog homepage.</p>
-        </div>
+        {state.status === "error" ? <p className="text-sm text-red-500">{state.message}</p> : null}
+        {state.status === "success" ? (
+          <p className="text-sm text-emerald-500">{state.message ?? "Project created successfully."}</p>
+        ) : null}
 
-        <div className="space-y-2 sm:col-span-1">
-          <Label htmlFor="visibility">Visibility</Label>
-          <select
-            id="visibility"
-            name="visibility"
-            defaultValue="PUBLIC"
-            className="h-10 w-full rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-700 shadow-sm focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-200/60"
-          >
-            <option value="PUBLIC">Public</option>
-            <option value="PRIVATE">Private</option>
-          </select>
-        </div>
-      </div>
-
-      {state.status === "error" ? <p className="text-sm text-red-500">{state.message}</p> : null}
-      {state.status === "success" ? (
-        <p className="text-sm text-emerald-500">{state.message ?? "Project created successfully."}</p>
-      ) : null}
-
-      <Button type="submit" className="w-full sm:w-auto">
-        Create project
-      </Button>
-    </form>
-  );
+        <Button type="submit" className="w-full sm:w-auto">
+          Create project
+        </Button>
+      </form>
+    );
 }
 

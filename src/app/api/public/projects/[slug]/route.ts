@@ -30,6 +30,8 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
       name: true,
       slug: true,
       description: true,
+      logoUrl: true,
+      websiteUrl: true,
       createdAt: true,
       changelogs: {
         where: {

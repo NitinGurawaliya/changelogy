@@ -48,6 +48,9 @@ async function fetchChangelog(projectSlug: string, versionSlug: string) {
           description: true,
           visibility: true,
           ownerId: true,
+          logoUrl: true,
+          websiteUrl: true,
+          createdAt: true,
             changelogs: {
               orderBy: { createdAt: "desc" },
               select: {
@@ -82,13 +85,22 @@ export async function generateMetadata({ params }: { params: VersionPageParams }
 
   const description = (changelog.summary ?? changelog.content.slice(0, 160)).replace(/\s+/g, " ").trim();
 
-  return {
-    title: `${changelog.project.name} — ${changelog.versionLabel}`,
+  const metadata: Metadata = {
+    title: `${changelog.project.name} ${changelog.versionLabel}`,
     description,
     alternates: {
       canonical: `/projects/${changelog.project.slug}/versions/${changelog.versionSlug}`,
     },
   };
+
+  if (changelog.project.logoUrl) {
+    metadata.icons = {
+      icon: [{ url: changelog.project.logoUrl }],
+      shortcut: [{ url: changelog.project.logoUrl }],
+    };
+  }
+
+  return metadata;
 }
 
 export default async function VersionPage({ params }: { params: VersionPageParams }) {
@@ -138,19 +150,46 @@ export default async function VersionPage({ params }: { params: VersionPageParam
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-5 py-16 sm:px-6 lg:py-20">
         <section className="relative overflow-hidden rounded-3xl border border-neutral-200/70 bg-white/85 p-8 backdrop-blur sm:p-10">
           <div className="absolute right-6 top-6 h-24 w-24 rounded-full bg-neutral-100/60 blur-2xl" />
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-2xl">
-              <div className="inline-flex items-center gap-3">
-                <span className="inline-flex items-center rounded-full bg-neutral-900/90 px-3 py-1 text-xs font-semibold uppercase tracking-[0.4em] text-neutral-100">
-                  {changelog.versionLabel}
-                </span>
-                <time dateTime={publishedDate.toISOString()} className="text-xs font-medium uppercase tracking-[0.3em] text-neutral-500">
-                  {formatDate(publishedDate)}
-                </time>
+          
+          {/* Logo and Date Row */}
+          <div className="flex items-center gap-4">
+            {changelog.project.logoUrl ? (
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm shadow-neutral-200/60">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={changelog.project.logoUrl}
+                  alt={`${changelog.project.name} logo`}
+                  className="h-12 w-12 object-contain"
+                  loading="lazy"
+                  referrerPolicy="no-referrer"
+                />
               </div>
-              <h1 className="mt-5 text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl">{changelog.project.name}</h1>
-              <p className="mt-3 max-w-2xl text-sm text-neutral-500 sm:text-base">{changelog.project.description}</p>
+            ) : null}
+
+            <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.35em] text-neutral-500">
+              <span>{changelog.project.visibility === "PUBLIC" ? "Public project" : "Private project"}</span>
+              <span className="inline-block h-1 w-1 rounded-full bg-neutral-300" />
+              <span>Since {formatDate(changelog.project.createdAt)}</span>
             </div>
+          </div>
+
+          {/* Title and Description */}
+          <div className="mt-6 space-y-4">
+            <h1 className="text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl">{changelog.project.name}</h1>
+            <p className="text-sm text-neutral-500 sm:text-base">
+              {changelog.project.description ?? "Follow every iteration, launch, and improvement for this product."}
+            </p>
+            {changelog.project.websiteUrl ? (
+              <Link
+                href={changelog.project.websiteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-sm text-neutral-400 transition hover:text-neutral-600"
+              >
+                Visit product site
+                <span aria-hidden="true">↗</span>
+              </Link>
+            ) : null}
           </div>
 
           {/* {highlightedSiblings.length > 0 ? (
