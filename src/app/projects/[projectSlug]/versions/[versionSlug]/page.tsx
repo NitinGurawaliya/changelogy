@@ -141,15 +141,9 @@ export default async function VersionPage({ params }: { params: VersionPageParam
   const projectUrl = `${baseUrl}/projects/${changelog.project.slug}`;
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-neutral-50">
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -top-20 right-10 h-72 w-72 rounded-full bg-neutral-200/40 blur-3xl" />
-        <div className="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-neutral-300/30 blur-3xl" />
-      </div>
-
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-5 py-16 sm:px-6 lg:py-20">
-        <section className="relative overflow-hidden rounded-3xl border border-neutral-200/70 bg-white/85 p-8 backdrop-blur sm:p-10">
-          <div className="absolute right-6 top-6 h-24 w-24 rounded-full bg-neutral-100/60 blur-2xl" />
+    <main className="min-h-screen bg-neutral-50">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-12 sm:px-6 lg:py-16">
+        <section className="rounded-xl border border-neutral-200 bg-white p-6 shadow-sm sm:p-8">
           
           {/* Logo and Date Row */}
           <div className="flex items-center gap-4">
@@ -223,17 +217,14 @@ export default async function VersionPage({ params }: { params: VersionPageParam
           ) : null} */}
         </section>
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
-          <article className="relative overflow-hidden rounded-3xl border border-neutral-200/80 bg-white/90 p-6 backdrop-blur sm:p-8 lg:p-10">
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-neutral-100/70 to-transparent" />
-            <div className="relative z-10">
-              <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                {changelog.content}
-              </ReactMarkdown>
-            </div>
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
+          <article className="rounded-xl border border-neutral-200 bg-white p-6 shadow-sm sm:p-8">
+            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+              {changelog.content}
+            </ReactMarkdown>
           </article>
 
-          <aside className="rounded-3xl border border-neutral-200/70 bg-white/85 p-5 shadow-md shadow-neutral-200/80 backdrop-blur lg:sticky lg:top-24 lg:p-6">
+          <aside className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm lg:sticky lg:top-24">
             <h3 className="text-sm font-semibold text-neutral-900">Browse other versions</h3>
             <p className="mt-1 text-xs text-neutral-500">Jump between releases without leaving the project timeline.</p>
             {sidebarSiblings.length === 0 ? (
@@ -241,20 +232,20 @@ export default async function VersionPage({ params }: { params: VersionPageParam
                 No additional versions yet.
               </div>
             ) : (
-              <ul className="mt-5 space-y-3">
+              <ul className="mt-4 space-y-2">
                 {sidebarSiblings.map((entry) => (
                   <li key={entry.id}>
                     <Link
                       href={`/projects/${changelog.project.slug}/versions/${entry.versionSlug}`}
-                      className="group block rounded-3xl border border-neutral-200/80 bg-white/90 px-4 py-3 shadow-sm shadow-neutral-200/50 transition hover:-translate-y-1 hover:border-neutral-300 hover:bg-white hover:shadow-md hover:shadow-neutral-200/70"
+                      className="group block rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 transition hover:border-neutral-300 hover:bg-white"
                     >
-                      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-neutral-400">
+                      <p className="text-xs font-medium text-neutral-600">
                         {entry.publishedAt ? "Published" : "Draft"}
                       </p>
-                      <h4 className="mt-2 text-sm font-semibold text-neutral-900 group-hover:text-neutral-950">
+                      <h4 className="mt-1 text-sm font-semibold text-neutral-900 group-hover:text-neutral-950">
                         {entry.versionLabel}
                       </h4>
-                      <p className="mt-1 text-xs text-neutral-500">
+                      <p className="mt-0.5 text-xs text-neutral-500">
                         {entry.publishedAt ? formatDate(entry.publishedAt) : formatDate(entry.createdAt)}
                       </p>
                     </Link>
@@ -262,12 +253,12 @@ export default async function VersionPage({ params }: { params: VersionPageParam
                 ))}
               </ul>
             )}
-            <div className="mt-6 flex flex-col gap-3">
+            <div className="mt-6">
               <Link
                 href={`/projects/${changelog.project.slug}`}
-                className="inline-flex w-full items-center justify-center rounded-full border border-neutral-200 px-3 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-neutral-600 transition hover:border-neutral-300 hover:text-neutral-900"
+                className="inline-flex w-full items-center justify-center rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50"
               >
-                Project homepage
+                ← Back to project
               </Link>
             </div>
           </aside>

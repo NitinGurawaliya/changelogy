@@ -117,8 +117,8 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
   return (
     <main className="min-h-screen bg-neutral-50 px-4 py-10 sm:px-6 sm:py-16">
-      <section className="mx-auto w-full max-w-4xl">
-        <div className="rounded-3xl border border-neutral-200/70 bg-white/90 p-6 shadow-lg shadow-neutral-200/60 sm:p-10">
+      <section className="mx-auto w-full max-w-5xl">
+        <div className="rounded-xl border border-neutral-200 bg-white p-6 shadow-sm sm:p-8">
           {/* Logo and Date Row */}
           <div className="flex items-center gap-4">
             {project.logoUrl ? (
@@ -170,37 +170,33 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         </div>
 
         {publishedChangelogs.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-neutral-200/80 bg-white/80 p-8 text-center shadow-inner shadow-neutral-200/50 sm:p-12">
-            <h3 className="text-lg font-semibold text-neutral-800">No public releases yet.</h3>
-            <p className="mt-2 text-sm text-neutral-500">
-              As soon as a release is published, it will appear right here.
+          <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-12 text-center">
+            <h3 className="text-lg font-semibold text-neutral-900">No public releases yet</h3>
+            <p className="mt-2 text-sm text-neutral-600">
+              As soon as a release is published, it will appear here.
             </p>
           </div>
         ) : (
-          <ul className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {publishedChangelogs.map((entry) => {
               const publishedDate = entry.publishedAt ?? entry.createdAt;
-              const preview =
-                entry.summary && entry.summary.length > 140
-                  ? `${entry.summary.slice(0, 137)}…`
-                  : entry.summary ?? "Open to read the full release story.";
 
               return (
                 <li key={entry.id}>
                   <Link
                     href={`/projects/${project.slug}/versions/${entry.versionSlug}`}
-                    className="group block h-full rounded-2xl border border-neutral-200/80 bg-white/80 p-4 text-left shadow-sm shadow-neutral-200/50 transition hover:-translate-y-1 hover:border-neutral-300 hover:shadow-lg hover:shadow-neutral-200/70 sm:p-5"
+                    className="group block h-full rounded-xl border border-neutral-200 bg-white p-5 text-left shadow-sm transition hover:shadow-md"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="space-y-1">
-                        <h3 className="text-lg font-semibold text-neutral-900 group-hover:text-neutral-950">
+                        <h3 className="text-base font-semibold text-neutral-900 group-hover:text-neutral-950">
                           {entry.versionLabel}
                         </h3>
-                        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-neutral-500 group-hover:text-neutral-700">
+                        <p className="text-xs font-medium text-neutral-600">
                           {formatDate(publishedDate)}
                         </p>
                       </div>
-                      <span className="mt-1 inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 text-xs font-semibold text-neutral-500 transition group-hover:border-neutral-300 group-hover:text-neutral-800">
+                      <span className="mt-1 inline-flex size-8 items-center justify-center rounded-lg border border-neutral-200 text-xs font-medium text-neutral-500 transition group-hover:border-neutral-300 group-hover:text-neutral-700">
                         →
                       </span>
                     </div>
@@ -212,29 +208,23 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         )}
 
         {isOwner && draftChangelogs.length > 0 ? (
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold text-neutral-900">Drafts (visible only to you)</h3>
-            <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-8 space-y-4">
+            <h3 className="text-lg font-semibold text-neutral-900">Drafts</h3>
+            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {draftChangelogs.map((entry) => {
-                const preview =
-                  entry.summary && entry.summary.length > 120
-                    ? `${entry.summary.slice(0, 117)}…`
-                    : entry.summary ?? "Continue writing your notes and publish when ready.";
-
                 return (
                   <li key={entry.id}>
                     <Link
                       href={`/projects/${project.slug}/versions/${entry.versionSlug}`}
-                      className="group block h-full rounded-2xl border border-dashed border-neutral-200 bg-white/80 p-4 text-left shadow-sm transition hover:border-neutral-300 hover:shadow-md sm:p-5"
+                      className="group block h-full rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-5 text-left transition hover:border-neutral-400 hover:bg-white"
                     >
-                      <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.3em] text-neutral-500">
-                        <span>Draft</span>
+                      <div className="mb-2 flex items-center justify-between text-xs font-medium text-neutral-600">
+                        <span className="rounded-full bg-neutral-200 px-2 py-0.5">Draft</span>
                         <span>{formatDate(entry.createdAt)}</span>
                       </div>
-                      <h4 className="mt-3 text-base font-semibold text-neutral-900 group-hover:text-neutral-950">
+                      <h4 className="text-base font-semibold text-neutral-900 group-hover:text-neutral-950">
                         {entry.versionLabel}
                       </h4>
-                      <p className="mt-2 text-sm text-neutral-500">{preview}</p>
                     </Link>
                   </li>
                 );

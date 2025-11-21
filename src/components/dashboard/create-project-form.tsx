@@ -64,7 +64,7 @@ export function CreateProjectForm({ onSuccess }: CreateProjectFormProps) {
               id="visibility"
               name="visibility"
               defaultValue="PUBLIC"
-              className="h-10 w-full rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-700 shadow-sm focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-200/60"
+              className="h-10 w-full rounded-lg border border-neutral-300 bg-white px-3 text-sm text-neutral-900 shadow-sm focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-900/10"
             >
               <option value="PUBLIC">Public</option>
               <option value="PRIVATE">Private</option>
