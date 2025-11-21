@@ -1,9 +1,10 @@
 import { prisma } from "./prisma";
 import { slugify } from "./slug";
 
-export async function generateUniqueProjectSlug(ownerId: string, name: string) {
-  const baseSlug = slugify(name) || "project";
-  let slug = baseSlug;
+export async function generateUniqueProjectSlug(ownerId: string, name: string, providedSlug?: string) {
+  const baseSlug = providedSlug ? slugify(providedSlug) : slugify(name);
+  const finalBaseSlug = baseSlug || "project";
+  let slug = finalBaseSlug;
   let counter = 1;
 
   while (true) {
@@ -20,7 +21,7 @@ export async function generateUniqueProjectSlug(ownerId: string, name: string) {
     }
 
     counter += 1;
-    slug = `${baseSlug}-${counter}`;
+    slug = `${finalBaseSlug}-${counter}`;
   }
 }
 

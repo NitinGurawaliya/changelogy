@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { FolderGit2, Rocket, FileClock, History } from "lucide-react";
+import { FolderGit2, Rocket, FileClock, History, Plus, FileText, Github, Sparkles } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { CreateProjectModal, CreateVersionModal } from "@/components/dashboard/dashboard-modals";
 import { getBaseUrl } from "@/lib/url";
 import { ShareLinkButton } from "@/components/share-link-button";
+import { GitHubConnection } from "@/components/dashboard/github-connection";
+import { GitHubReposList } from "@/components/dashboard/github-repos-list";
 
 function formatDate(date: Date) {
   return date.toLocaleDateString("en-US", {
@@ -25,11 +28,28 @@ export default async function Dashboard() {
 
   const userId = session.user.id;
 
-  const [projects, publishedCount, draftCount, recentChangelogs] = await Promise.all([
+  let projects: any[] = [];
+  let publishedCount = 0;
+  let draftCount = 0;
+  let recentChangelogs: any[] = [];
+  let dbError: string | null = null;
+
+  try {
+    [projects, publishedCount, draftCount, recentChangelogs] = await Promise.all([
     prisma.project.findMany({
       where: { ownerId: userId },
       orderBy: { createdAt: "desc" },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        websiteUrl: true,
+        logoUrl: true,
+        githubRepoId: true,
+        githubRepoUrl: true,
+        visibility: true,
+        createdAt: true,
         changelogs: {
           orderBy: { createdAt: "desc" },
           take: 3,
@@ -76,16 +96,108 @@ export default async function Dashboard() {
         },
       },
     }),
-  ]);
+    ]);
+  } catch (error: any) {
+    console.error("Database connection error:", error);
+    if (error?.code === "P1001" || error?.message?.includes("Can't reach database")) {
+      dbError = "Unable to connect to the database. Please check your database connection or try again later.";
+    } else {
+      dbError = "An error occurred while loading your data. Please try again.";
+    }
+  }
 
   const totalProjects = projects.length;
   const totalReleases = publishedCount + draftCount;
   const baseUrl = getBaseUrl();
 
+  // Show error state if database connection failed
+  if (dbError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-8 max-w-md text-center">
+          <div className="flex items-center justify-center mb-4">
+            <div className="flex size-12 items-center justify-center rounded-full bg-red-100">
+              <span className="text-2xl">⚠️</span>
+            </div>
+          </div>
+          <h3 className="text-lg font-semibold text-red-900 mb-2">Database Connection Error</h3>
+          <p className="text-sm text-red-700 mb-4">{dbError}</p>
+          <p className="text-xs text-red-600">
+            If this issue persists, please check your database configuration or contact support.
+          </p>
+        </div>
+        <Button asChild variant="outline">
+          <a href="/dashboard">Retry</a>
+        </Button>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col gap-10">
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Card className="rounded-2xl border border-neutral-200/80 bg-white shadow-sm shadow-neutral-200/70">
+    <div className="flex flex-col gap-8">
+      {/* Quick Actions Section */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-neutral-900">Quick actions</h2>
+            <p className="mt-1 text-sm text-neutral-600">Choose how you want to create your changelog</p>
+          </div>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Card className="group cursor-pointer border-2 border-dashed border-neutral-300 hover:border-neutral-400 hover:bg-neutral-50 transition-colors">
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="flex size-10 items-center justify-center rounded-lg bg-neutral-100 group-hover:bg-neutral-200 transition-colors">
+                  <Plus className="size-5 text-neutral-700" />
+                </div>
+                <CardTitle className="text-base font-semibold text-neutral-900">New Project</CardTitle>
+              </div>
+              <CardDescription className="text-sm">Create a new project from scratch</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CreateProjectModal triggerLabel="Create project" buttonVariant="outline" className="w-full" />
+            </CardContent>
+          </Card>
+
+          <Card className="group cursor-pointer border-2 border-dashed border-neutral-300 hover:border-neutral-400 hover:bg-neutral-50 transition-colors">
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="flex size-10 items-center justify-center rounded-lg bg-blue-100 group-hover:bg-blue-200 transition-colors">
+                  <Github className="size-5 text-blue-700" />
+                </div>
+                <CardTitle className="text-base font-semibold text-neutral-900">From GitHub</CardTitle>
+              </div>
+              <CardDescription className="text-sm">Generate changelog from GitHub repository</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-lg border border-neutral-200 bg-white p-3 text-sm text-neutral-600">
+                Connect GitHub below to get started
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="group cursor-pointer border-2 border-dashed border-neutral-300 hover:border-neutral-400 hover:bg-neutral-50 transition-colors">
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="flex size-10 items-center justify-center rounded-lg bg-purple-100 group-hover:bg-purple-200 transition-colors">
+                  <FileText className="size-5 text-purple-700" />
+                </div>
+                <CardTitle className="text-base font-semibold text-neutral-900">Manual Entry</CardTitle>
+              </div>
+              <CardDescription className="text-sm">Write changelog manually in Markdown</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-lg border border-neutral-200 bg-white p-3 text-sm text-neutral-600">
+                Select a project below to add version
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="rounded-xl border border-neutral-200 bg-white shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-neutral-500">Total projects</CardTitle>
             <FolderGit2 className="size-5 text-neutral-400" />
@@ -96,7 +208,7 @@ export default async function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border border-neutral-200/80 bg-white shadow-sm shadow-neutral-200/70">
+        <Card className="rounded-xl border border-neutral-200 bg-white shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-neutral-500">Published releases</CardTitle>
             <Rocket className="size-5 text-neutral-400" />
@@ -107,7 +219,7 @@ export default async function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border border-neutral-200/80 bg-white shadow-sm shadow-neutral-200/70">
+        <Card className="rounded-xl border border-neutral-200 bg-white shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-neutral-500">Draft notes</CardTitle>
             <FileClock className="size-5 text-neutral-400" />
@@ -118,7 +230,7 @@ export default async function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border border-neutral-200/80 bg-white shadow-sm shadow-neutral-200/70">
+        <Card className="rounded-xl border border-neutral-200 bg-white shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-neutral-500">Total releases</CardTitle>
             <History className="size-5 text-neutral-400" />
@@ -132,186 +244,142 @@ export default async function Dashboard() {
         </Card>
       </section>
 
+      {/* GitHub Integration Section */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-neutral-900">GitHub Integration</h2>
+            <p className="mt-1 text-sm text-neutral-600">
+              Connect your GitHub account to generate changelogs automatically from commits
+            </p>
+          </div>
+        </div>
+        <GitHubConnection />
+        {projects.length > 0 && <GitHubReposList />}
+      </section>
 
-      <section className="space-y-6">
+      {/* Projects Section */}
+      <section className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="text-xl font-semibold text-neutral-900">Your projects</h2>
-            <p className="text-sm text-neutral-500">
-              Review changelog status, open versions, and create precise release notes.
+            <p className="mt-1 text-sm text-neutral-600">
+              Manage projects, add versions, and create release notes
             </p>
           </div>
-          {projects.length > 0 ? (
-            <CreateProjectModal />
-          ) : null}
+          {projects.length > 0 && <CreateProjectModal />}
         </div>
 
         {projects.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-neutral-200/90 bg-white/80 p-12 text-center">
-            <h3 className="text-lg font-semibold text-neutral-800">No projects yet</h3>
-            <p className="mt-2 text-sm text-neutral-500">
-              Spin up a project to unlock a dashboard, version history, and public pages.
-            </p>
-            <div className="mt-6 flex justify-center">
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="flex size-12 items-center justify-center rounded-full bg-neutral-100 mb-4">
+                <FolderGit2 className="size-6 text-neutral-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-neutral-900 mb-2">No projects yet</h3>
+              <p className="text-sm text-neutral-600 mb-6 max-w-sm">
+                Create your first project to start building beautiful changelogs for your products.
+              </p>
               <CreateProjectModal />
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         ) : (
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {projects.map((project) => (
-              <article
-                key={project.id}
-                className="flex h-full flex-col rounded-3xl border border-neutral-200/80 bg-white p-6 transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-neutral-200/80"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-semibold text-neutral-900">{project.name}</h3>
-                    {project.description ? (
-                      <p className="text-sm text-neutral-500">{project.description}</p>
-                    ) : (
-                      <p className="text-sm text-neutral-400">No description added yet.</p>
+              <Card key={project.id} className="hover:shadow-md transition-shadow">
+                <CardHeader>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 space-y-1">
+                      <CardTitle className="text-lg font-semibold text-neutral-900">{project.name}</CardTitle>
+                      {project.description ? (
+                        <CardDescription className="text-sm line-clamp-2">{project.description}</CardDescription>
+                      ) : (
+                        <CardDescription className="text-sm text-neutral-400">No description</CardDescription>
+                      )}
+                    </div>
+                    {project.githubRepoUrl && (
+                      <div className="flex size-8 items-center justify-center rounded-lg bg-neutral-100">
+                        <Github className="size-4 text-neutral-600" />
+                      </div>
                     )}
                   </div>
-                  <div className="flex items-start gap-2 text-xs text-neutral-500">
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <CreateVersionModal
+                      projectId={project.id}
+                      projectSlug={project.slug}
+                      projectName={project.name}
+                      githubRepoId={project.githubRepoId}
+                      githubRepoUrl={project.githubRepoUrl}
+                      triggerVariant="solid"
+                      triggerLabel={project.githubRepoUrl ? "Add version" : "Add release"}
+                      size="sm"
+                    />
                     <ShareLinkButton
                       url={`${baseUrl}/projects/${project.slug}`}
-                      triggerLabel="Share project"
-                      triggerVariant="ghost"
-                      triggerSize="icon"
+                      triggerLabel="Share"
+                      triggerVariant="outline"
+                      triggerSize="sm"
                       modalTitle="Share Project Link"
                       modalDescription={`Share the ${project.name} changelog homepage.`}
                       shareMessage={`Follow ${project.name} updates on Changelogy`}
                       copyButtonLabel="Copy project link"
                       ariaLabel="Share project"
                     />
-                    <CreateVersionModal
-                      projectId={project.id}
-                      projectSlug={project.slug}
-                      projectName={project.name}
-                      triggerVariant="outline"
-                      triggerLabel="Add release"
-                      size="sm"
-                    />
                   </div>
-                </div>
 
-                <div className="mt-6 space-y-4">
-                  <div className="flex flex-wrap items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">
-                    <span>Recent releases</span>
-                    <Link
-                      href={`/projects/${project.slug}`}
-                      className="rounded-full border border-neutral-200 px-3 py-1 text-[11px] font-medium text-neutral-700 hover:border-neutral-300 hover:text-neutral-900"
-                    >
-                      Project page
-                    </Link>
-                  </div>
-                  {project.changelogs.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-neutral-200/80 bg-neutral-50/80 px-4 py-6 text-center text-sm text-neutral-500">
-                      No releases yet—add your first update.
-                    </div>
-                  ) : (
-                    <ul className="space-y-3">
-                      {project.changelogs.map((entry) => (
-                        <li
-                          key={entry.id}
-                          className="rounded-2xl border border-neutral-200/80 bg-white/90 px-4 py-3 shadow-sm shadow-neutral-200/50"
-                        >
-                          <div className="flex flex-wrap items-center justify-between gap-3 text-sm font-semibold text-neutral-800">
-                            <span>{entry.versionLabel}</span>
-                            <span className="text-xs font-normal text-neutral-400">
-                              {entry.publishedAt ? "Published" : "Draft"} • {formatDate(entry.createdAt)}
-                            </span>
-                          </div>
-                          {/* {entry.summary ? (
-                            <p className="mt-1 text-xs text-neutral-500">{entry.summary}</p>
-                          ) : null} */}
-                          <div className="mt-2 flex flex-wrap items-center gap-3 text-xs font-medium text-neutral-600">
+                  {project.changelogs.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
+                        Recent releases
+                      </p>
+                      <ul className="space-y-2">
+                        {project.changelogs.map((entry: {
+                          id: string;
+                          versionLabel: string;
+                          versionSlug: string;
+                          summary: string | null;
+                          createdAt: Date;
+                          publishedAt: Date | null;
+                        }) => (
+                          <li key={entry.id}>
                             <Link
                               href={`/projects/${project.slug}/versions/${entry.versionSlug}`}
-                              className="underline-offset-4 hover:underline"
+                              className="flex items-center justify-between rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm transition hover:bg-neutral-100"
                             >
-                              View version
-                            </Link>
-                            <ShareLinkButton
-                              url={`${baseUrl}/projects/${project.slug}/versions/${entry.versionSlug}`}
-                              triggerVariant="ghost"
-                              triggerSize="icon"
-                              modalTitle="Share Release Link"
-                              modalDescription={`Share ${project.name} • ${entry.versionLabel} with your audience.`}
-                              shareMessage={`${project.name} ${entry.versionLabel} release notes — see what's new`}
-                              fieldLabel="Release link"
-                              copyButtonLabel="Copy release link"
-                              ariaLabel={`Share ${entry.versionLabel}`}
-                            />
-                            {!entry.publishedAt ? (
-                              <span className="rounded-full bg-neutral-900 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-100">
-                                Draft
+                              <span className="font-medium text-neutral-900">{entry.versionLabel}</span>
+                              <span className="text-xs text-neutral-500">
+                                {entry.publishedAt ? (
+                                  <span className="inline-flex items-center gap-1">
+                                    <Rocket className="size-3" />
+                                    Published
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1">
+                                    <FileClock className="size-3" />
+                                    Draft
+                                  </span>
+                                )}
                               </span>
-                            ) : null}
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                      <Link
+                        href={`/projects/${project.slug}`}
+                        className="block text-center text-xs font-medium text-neutral-600 hover:text-neutral-900"
+                      >
+                        View all versions →
+                      </Link>
+                    </div>
                   )}
-                </div>
-              </article>
+                </CardContent>
+              </Card>
             ))}
           </div>
         )}
       </section>
-
-      {/* <section className="rounded-3xl border border-neutral-200/80 bg-white p-8 shadow-md shadow-neutral-200/70">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-semibold text-neutral-900">Recent activity</h2>
-            <p className="text-sm text-neutral-500">Keep an eye on the latest releases across all projects.</p>
-          </div>
-          <Link
-            href="/projects"
-            className="text-sm font-semibold text-neutral-600 underline-offset-4 hover:text-neutral-900 hover:underline"
-          >
-            Browse public changelog
-          </Link>
-        </div>
-
-        {recentChangelogs.length === 0 ? (
-          <div className="mt-6 rounded-2xl border border-dashed border-neutral-200/80 bg-neutral-50/80 px-4 py-8 text-center text-sm text-neutral-500">
-            No release activity yet. Ship a version and it will appear here.
-          </div>
-        ) : (
-          <ul className="mt-6 space-y-4">
-            {recentChangelogs.map((entry) => (
-              <li
-                key={entry.id}
-                className="flex flex-col gap-3 rounded-2xl border border-neutral-200/80 bg-white/90 px-4 py-4 shadow-sm shadow-neutral-200/50 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-neutral-800">
-                    {entry.project.name} • {entry.versionLabel}
-                  </p>
-                  <p className="text-xs text-neutral-500">
-                    {entry.publishedAt ? "Published" : "Draft"} • {formatDate(entry.createdAt)}
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-3 text-sm">
-                  <Link
-                    href={`/projects/${entry.project.slug}/versions/${entry.versionSlug}`}
-                    className="font-medium text-neutral-700 underline-offset-4 hover:underline"
-                  >
-                    View version
-                  </Link>
-                  <Link
-                    href={`/projects/${entry.project.slug}`}
-                    className="text-neutral-500 underline-offset-4 hover:text-neutral-900 hover:underline"
-                  >
-                    Project home
-                  </Link>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section> */}
     </div>
   );
 }
