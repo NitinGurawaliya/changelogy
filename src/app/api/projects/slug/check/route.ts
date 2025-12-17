@@ -31,7 +31,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ available: !existingProject });
   } catch (error) {
-    console.error("Error checking slug availability:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -94,7 +94,6 @@ export async function GET(
 
     return NextResponse.json({ commits: formattedCommits, branch: branchToUse });
   } catch (error) {
-    console.error("Error fetching GitHub commits:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

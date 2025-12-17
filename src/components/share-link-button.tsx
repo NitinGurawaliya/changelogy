@@ -51,7 +51,7 @@ export function ShareLinkButton({
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     } catch (error) {
-      console.error("Failed to copy share link", error);
+      // Silently fail - clipboard access may not be available
     }
   };
 

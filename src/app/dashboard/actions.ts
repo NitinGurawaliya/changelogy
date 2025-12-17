@@ -94,7 +94,7 @@ export async function createProjectAction(
     resolvedWebsiteUrl = branding.websiteUrl || websiteUrl;
     projectLogoUrl = branding.logoUrl ?? null;
   } catch (error) {
-    console.warn("Failed to fetch site branding for project:", websiteUrl, error);
+    // Silently fail - use original websiteUrl if branding fetch fails
   }
 
   const project = await prisma.project.create({

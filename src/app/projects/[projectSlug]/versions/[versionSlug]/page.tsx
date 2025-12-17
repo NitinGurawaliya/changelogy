@@ -218,10 +218,12 @@ export default async function VersionPage({ params }: { params: VersionPageParam
         </section>
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
-          <article className="rounded-xl border border-neutral-200 bg-white p-6 shadow-sm sm:p-8">
-            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-              {changelog.content}
-            </ReactMarkdown>
+          <article className="rounded-xl border border-neutral-200 bg-white p-6 shadow-sm sm:p-8 overflow-hidden">
+            <div className="changelog-content w-full">
+              <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                {changelog.content}
+              </ReactMarkdown>
+            </div>
           </article>
 
           <aside className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm lg:sticky lg:top-24">

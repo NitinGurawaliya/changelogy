@@ -5,7 +5,11 @@ import { signIn, useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Github, CheckCircle2, XCircle } from "lucide-react";
 
-export function GitHubConnection() {
+type GitHubConnectionProps = {
+  onConnectionChange?: (isConnected: boolean) => void;
+};
+
+export function GitHubConnection({ onConnectionChange }: GitHubConnectionProps = {}) {
   const { data: session, status } = useSession();
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
@@ -15,9 +19,12 @@ export function GitHubConnection() {
       if (status === "authenticated" && session?.user?.id) {
         try {
           const response = await fetch("/api/github/repos");
-          setIsConnected(response.ok);
+          const connected = response.ok;
+          setIsConnected(connected);
+          onConnectionChange?.(connected);
         } catch {
           setIsConnected(false);
+          onConnectionChange?.(false);
         } finally {
           setLoading(false);
         }

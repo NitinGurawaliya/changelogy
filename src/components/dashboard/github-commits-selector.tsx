@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, CheckCircle2, Circle, Sparkles } from "lucide-react";
+import { Loader2, CheckCircle2, Circle, Sparkles, ChevronDown, Calendar } from "lucide-react";
+import { ChangelogPreviewModal } from "./changelog-preview-modal";
 
 type Repo = {
   id: number;
@@ -29,6 +30,7 @@ type Commit = {
   };
   url: string;
   date: string;
+  branch?: string;
 };
 
 type GitHubCommitsSelectorProps = {
@@ -46,29 +48,66 @@ export function GitHubCommitsSelector({ repo, projectId, onSuccess, onBack }: Gi
   const [publish, setPublish] = useState(true); // Default to publish
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [branch, setBranch] = useState(repo.default_branch || "main");
+  const [selectedBranch, setSelectedBranch] = useState<string>(repo.default_branch || "main");
+  const [branches, setBranches] = useState<string[]>([]);
+  const [loadingBranches, setLoadingBranches] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewData, setPreviewData] = useState<{
+    changelog: string;
+    projectSlug: string;
+    versionSlug: string;
+  } | null>(null);
+
+  useEffect(() => {
+    fetchBranches();
+  }, [repo]);
 
   useEffect(() => {
     fetchCommits();
-  }, [repo, branch]);
+  }, [repo, selectedBranch]);
+
+  const fetchBranches = async () => {
+    setLoadingBranches(true);
+    try {
+      const response = await fetch(`/api/github/repos/${repo.owner}/${repo.name}/branches`);
+      if (response.ok) {
+        const data = await response.json();
+        const branchNames = data.branches?.map((b: any) => b.name) || [];
+        setBranches(branchNames);
+        if (branchNames.length > 0 && !selectedBranch) {
+          setSelectedBranch(repo.default_branch || branchNames[0]);
+        }
+      }
+    } catch (err) {
+      // Silently fail - branches are optional
+    } finally {
+      setLoadingBranches(false);
+    }
+  };
 
   const fetchCommits = async () => {
+    if (!selectedBranch) return;
+    
     setLoading(true);
     setError(null);
     try {
+      // Fetch commits from the selected branch only
       const response = await fetch(
-        `/api/github/repos/${repo.owner}/${repo.name}/commits?branch=${branch}&per_page=100`,
+        `/api/github/repos/${repo.owner}/${repo.name}/commits?branch=${selectedBranch}&per_page=100`,
       );
+      
       if (!response.ok) {
         throw new Error("Failed to fetch commits");
       }
+      
       const data = await response.json();
-      setCommits(data.commits || []);
-      if (data.branch) {
-        setBranch(data.branch);
-      }
+      const fetchedCommits = (data.commits || []).map((c: Commit) => ({ ...c, branch: selectedBranch }));
+      
+      // Sort by date (newest first)
+      fetchedCommits.sort((a: Commit, b: Commit) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      
+      setCommits(fetchedCommits);
     } catch (err) {
       setError("Failed to fetch commits");
     } finally {
@@ -125,7 +164,6 @@ export function GitHubCommitsSelector({ repo, projectId, onSuccess, onBack }: Gi
       
       // Show warning if basic changelog was used instead of AI
       if (fallbackReason && !aiUsed) {
-        console.warn("Changelog generation:", fallbackReason);
         // Show user-friendly message about AI not being used
         if (fallbackReason.includes("quota")) {
           setError(`⚠️ AI generation failed: OpenAI quota exceeded. Using basic changelog format. Please add Anthropic API key or check OpenAI billing.`);
@@ -161,14 +199,17 @@ export function GitHubCommitsSelector({ repo, projectId, onSuccess, onBack }: Gi
 
       router.refresh();
       
-      if (result.status === "success" && result.versionSlug) {
-        setSuccess(true);
-        
-        // Show success message and close modal after a short delay
-        setTimeout(() => {
-          onSuccess?.({ versionSlug: result.versionSlug });
-        }, 2000);
+      if (result.status === "success" && result.versionSlug && result.projectSlug) {
+        // Store preview data and show preview modal
+        setPreviewData({
+          changelog,
+          projectSlug: result.projectSlug,
+          versionSlug: result.versionSlug,
+        });
+        setGenerating(false);
+        setShowPreview(true);
       } else {
+        setGenerating(false);
         onSuccess?.();
       }
     } catch (err) {
@@ -233,59 +274,129 @@ export function GitHubCommitsSelector({ repo, projectId, onSuccess, onBack }: Gi
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label>Select commits ({selectedCommits.size} selected)</Label>
-          <select
-            value={branch}
-            onChange={(e) => setBranch(e.target.value)}
-            className="h-8 rounded border border-neutral-200 bg-white px-2 text-xs text-neutral-700"
-          >
-            <option value={branch}>{branch}</option>
-          </select>
         </div>
-        <div className="max-h-96 space-y-2 overflow-y-auto rounded-lg border border-neutral-200 p-2">
+        {branches.length > 0 && (
+          <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+            <Label className="text-xs font-semibold text-neutral-700 mb-2 block">
+              Select Branch
+            </Label>
+            <select
+              value={selectedBranch}
+              onChange={(e) => {
+                setSelectedBranch(e.target.value);
+                setSelectedCommits(new Set()); // Clear selected commits when switching branches
+              }}
+              className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 shadow-sm focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-900/10"
+            >
+              {branches.map((branchName) => (
+                <option key={branchName} value={branchName}>
+                  {branchName}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-neutral-500 mt-2">
+              Switch branches to view commits from that branch only
+            </p>
+          </div>
+        )}
+        <div className="max-h-96 space-y-4 overflow-y-auto rounded-lg border border-neutral-200 p-2">
           {commits.length === 0 ? (
             <p className="py-4 text-center text-sm text-neutral-500">No commits found</p>
           ) : (
-            commits.map((commit) => {
-              const isSelected = selectedCommits.has(commit.sha);
-              const message = commit.message.split("\n")[0]; // First line only
+            (() => {
+              // Group commits by week
+              const weekGroups = new Map<string, Commit[]>();
+              
+              commits.forEach((commit) => {
+                const date = new Date(commit.date);
+                const weekStart = new Date(date);
+                weekStart.setDate(date.getDate() - date.getDay()); // Start of week (Sunday)
+                weekStart.setHours(0, 0, 0, 0);
+                
+                const weekKey = weekStart.toISOString().split("T")[0];
+                if (!weekGroups.has(weekKey)) {
+                  weekGroups.set(weekKey, []);
+                }
+                weekGroups.get(weekKey)!.push(commit);
+              });
 
-              return (
-                <div
-                  key={commit.sha}
-                  onClick={() => toggleCommit(commit.sha)}
-                  className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition ${
-                    isSelected
-                      ? "border-emerald-500 bg-emerald-50/50"
-                      : "border-neutral-200 bg-white hover:border-neutral-300"
-                  }`}
-                >
-                  <div className="mt-0.5 shrink-0">
-                    {isSelected ? (
-                      <CheckCircle2 className="size-5 text-emerald-600" />
-                    ) : (
-                      <Circle className="size-5 text-neutral-300" />
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className={`text-sm font-medium ${isSelected ? "text-emerald-900" : "text-neutral-900"}`}>
-                      {message}
-                    </p>
-                    <p className="mt-1 text-xs text-neutral-500">
-                      {commit.author.name} • {new Date(commit.date).toLocaleDateString()}
-                    </p>
-                    <a
-                      href={commit.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="mt-1 text-xs text-neutral-400 hover:text-neutral-600"
-                    >
-                      View on GitHub →
-                    </a>
-                  </div>
-                </div>
+              // Sort weeks (newest first)
+              const sortedWeeks = Array.from(weekGroups.entries()).sort(
+                (a, b) => new Date(b[0]).getTime() - new Date(a[0]).getTime()
               );
-            })
+
+              return sortedWeeks.map(([weekKey, weekCommits]) => {
+                const weekStart = new Date(weekKey);
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekStart.getDate() + 6);
+                
+                const weekLabel = weekStart.getMonth() === weekEnd.getMonth()
+                  ? `${weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${weekEnd.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
+                  : `${weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${weekEnd.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`;
+
+                return (
+                  <div key={weekKey} className="space-y-2">
+                    <div className="flex items-center gap-2 sticky top-0 bg-white py-2 border-b border-neutral-200">
+                      <Calendar className="size-4 text-neutral-400" />
+                      <h4 className="text-xs font-semibold text-neutral-700 uppercase tracking-wide">
+                        Week of {weekLabel}
+                      </h4>
+                      <span className="text-xs text-neutral-400">({weekCommits.length} commits)</span>
+                    </div>
+                    <div className="space-y-2 pl-4">
+                      {weekCommits.map((commit) => {
+                        const isSelected = selectedCommits.has(commit.sha);
+                        const message = commit.message.split("\n")[0]; // First line only
+
+                        return (
+                          <div
+                            key={commit.sha}
+                            onClick={() => toggleCommit(commit.sha)}
+                            className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition ${
+                              isSelected
+                                ? "border-emerald-500 bg-emerald-50/50"
+                                : "border-neutral-200 bg-white hover:border-neutral-300"
+                            }`}
+                          >
+                            <div className="mt-0.5 shrink-0">
+                              {isSelected ? (
+                                <CheckCircle2 className="size-5 text-emerald-600" />
+                              ) : (
+                                <Circle className="size-5 text-neutral-300" />
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className={`text-sm font-medium ${isSelected ? "text-emerald-900" : "text-neutral-900"}`}>
+                                {message}
+                              </p>
+                              <div className="mt-1 flex items-center gap-2 flex-wrap">
+                                <p className="text-xs text-neutral-500">
+                                  {commit.author.name} • {new Date(commit.date).toLocaleDateString()}
+                                </p>
+                                {commit.branch && (
+                                  <span className="text-xs px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-600">
+                                    {commit.branch}
+                                  </span>
+                                )}
+                              </div>
+                              <a
+                                href={commit.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="mt-1 text-xs text-neutral-400 hover:text-neutral-600"
+                              >
+                                View on GitHub →
+                              </a>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              });
+            })()
           )}
         </div>
       </div>
@@ -331,7 +442,7 @@ export function GitHubCommitsSelector({ repo, projectId, onSuccess, onBack }: Gi
                 : ""}
           </p>
         )}
-        {generating && !success && (
+        {generating && (
           <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
             <p className="text-sm font-medium text-blue-900">AI is generating your changelog...</p>
             <p className="text-xs text-blue-700 mt-1">
@@ -339,23 +450,26 @@ export function GitHubCommitsSelector({ repo, projectId, onSuccess, onBack }: Gi
             </p>
           </div>
         )}
-
-        {success && (
-          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <CheckCircle2 className="size-5 text-emerald-600" />
-              <p className="text-sm font-semibold text-emerald-900">
-                {publish ? "Changelog generated and published!" : "Changelog generated successfully!"}
-              </p>
-            </div>
-            <p className="text-xs text-emerald-700">
-              {publish
-                ? "Your changelog is now live on your public project page."
-                : "Your changelog has been saved as a draft. You can publish it anytime."}
-            </p>
-          </div>
-        )}
       </div>
+
+      {previewData && (
+        <ChangelogPreviewModal
+          open={showPreview}
+          onOpenChange={(open) => {
+            setShowPreview(open);
+            if (!open) {
+              // Close parent modal when preview is closed
+              onSuccess?.({ versionSlug: previewData.versionSlug });
+            }
+          }}
+          changelog={previewData.changelog}
+          versionLabel={versionLabel}
+          projectSlug={previewData.projectSlug}
+          versionSlug={previewData.versionSlug}
+          projectName={repo.name}
+          published={publish}
+        />
+      )}
     </div>
   );
 }

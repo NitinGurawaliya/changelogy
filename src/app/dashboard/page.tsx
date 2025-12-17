@@ -1,15 +1,14 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { FolderGit2, Rocket, FileClock, History, Plus, FileText, Github, Sparkles } from "lucide-react";
+import { FolderGit2, Rocket, FileClock, History, Github } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CreateProjectModal, CreateVersionModal } from "@/components/dashboard/dashboard-modals";
+import { CreateVersionModal } from "@/components/dashboard/dashboard-modals";
 import { getBaseUrl } from "@/lib/url";
 import { ShareLinkButton } from "@/components/share-link-button";
-import { GitHubConnection } from "@/components/dashboard/github-connection";
-import { GitHubReposList } from "@/components/dashboard/github-repos-list";
+import { GitHubRepoModalButton } from "@/components/dashboard/github-repo-modal-button";
 
 function formatDate(date: Date) {
   return date.toLocaleDateString("en-US", {
@@ -98,7 +97,6 @@ export default async function Dashboard() {
     }),
     ]);
   } catch (error: any) {
-    console.error("Database connection error:", error);
     if (error?.code === "P1001" || error?.message?.includes("Can't reach database")) {
       dbError = "Unable to connect to the database. Please check your database connection or try again later.";
     } else {
@@ -135,66 +133,6 @@ export default async function Dashboard() {
 
   return (
     <div className="flex flex-col gap-8">
-      {/* Quick Actions Section */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-neutral-900">Quick actions</h2>
-            <p className="mt-1 text-sm text-neutral-600">Choose how you want to create your changelog</p>
-          </div>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Card className="group cursor-pointer border-2 border-dashed border-neutral-300 hover:border-neutral-400 hover:bg-neutral-50 transition-colors">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-neutral-100 group-hover:bg-neutral-200 transition-colors">
-                  <Plus className="size-5 text-neutral-700" />
-                </div>
-                <CardTitle className="text-base font-semibold text-neutral-900">New Project</CardTitle>
-              </div>
-              <CardDescription className="text-sm">Create a new project from scratch</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <CreateProjectModal triggerLabel="Create project" buttonVariant="outline" className="w-full" />
-            </CardContent>
-          </Card>
-
-          <Card className="group cursor-pointer border-2 border-dashed border-neutral-300 hover:border-neutral-400 hover:bg-neutral-50 transition-colors">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-blue-100 group-hover:bg-blue-200 transition-colors">
-                  <Github className="size-5 text-blue-700" />
-                </div>
-                <CardTitle className="text-base font-semibold text-neutral-900">From GitHub</CardTitle>
-              </div>
-              <CardDescription className="text-sm">Generate changelog from GitHub repository</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="rounded-lg border border-neutral-200 bg-white p-3 text-sm text-neutral-600">
-                Connect GitHub below to get started
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="group cursor-pointer border-2 border-dashed border-neutral-300 hover:border-neutral-400 hover:bg-neutral-50 transition-colors">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-purple-100 group-hover:bg-purple-200 transition-colors">
-                  <FileText className="size-5 text-purple-700" />
-                </div>
-                <CardTitle className="text-base font-semibold text-neutral-900">Manual Entry</CardTitle>
-              </div>
-              <CardDescription className="text-sm">Write changelog manually in Markdown</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="rounded-lg border border-neutral-200 bg-white p-3 text-sm text-neutral-600">
-                Select a project below to add version
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
       {/* Stats Section */}
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="rounded-xl border border-neutral-200 bg-white shadow-sm">
@@ -244,20 +182,6 @@ export default async function Dashboard() {
         </Card>
       </section>
 
-      {/* GitHub Integration Section */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-neutral-900">GitHub Integration</h2>
-            <p className="mt-1 text-sm text-neutral-600">
-              Connect your GitHub account to generate changelogs automatically from commits
-            </p>
-          </div>
-        </div>
-        <GitHubConnection />
-        {projects.length > 0 && <GitHubReposList />}
-      </section>
-
       {/* Projects Section */}
       <section className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -267,7 +191,7 @@ export default async function Dashboard() {
               Manage projects, add versions, and create release notes
             </p>
           </div>
-          {projects.length > 0 && <CreateProjectModal />}
+          <GitHubRepoModalButton />
         </div>
 
         {projects.length === 0 ? (
@@ -280,7 +204,7 @@ export default async function Dashboard() {
               <p className="text-sm text-neutral-600 mb-6 max-w-sm">
                 Create your first project to start building beautiful changelogs for your products.
               </p>
-              <CreateProjectModal />
+              <GitHubRepoModalButton />
             </CardContent>
           </Card>
         ) : (

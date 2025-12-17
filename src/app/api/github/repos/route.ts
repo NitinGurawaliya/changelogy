@@ -74,7 +74,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ repos: reposWithStatus });
   } catch (error) {
-    console.error("Error fetching GitHub repos:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

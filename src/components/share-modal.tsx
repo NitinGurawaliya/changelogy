@@ -41,7 +41,7 @@ export default function ShareModal({ productName, version, publicUrl }: ShareMod
       await navigator.clipboard.writeText(publicUrl);
       setCopied(true);
     } catch (error) {
-      console.error("Failed to copy link", error);
+      // Silently fail - clipboard access may not be available
     }
   };
 

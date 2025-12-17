@@ -36,10 +36,6 @@ export async function POST(request: NextRequest) {
     // Limit commits to prevent token limit issues (max 50 commits per request)
     const MAX_COMMITS = 50;
     const commitsToProcess = commits.length > MAX_COMMITS ? commits.slice(0, MAX_COMMITS) : commits;
-    
-    if (commits.length > MAX_COMMITS) {
-      console.warn(`Too many commits (${commits.length}), limiting to ${MAX_COMMITS} for token limit`);
-    }
 
     // Process and prepare commits for AI with structured format (title, description, context)
     const processedCommits = processCommits(commitsToProcess);
@@ -50,8 +46,12 @@ export async function POST(request: NextRequest) {
     
     if (!aiApiKey) {
       // Fallback: Generate a basic changelog without AI
-      const changelogContent = generateBasicChangelog(commits, versionLabel);
-      return NextResponse.json({ changelog: changelogContent });
+      const changelogContent = generateBasicChangelog(commitsToProcess, versionLabel);
+      return NextResponse.json({ 
+        changelog: changelogContent,
+        aiUsed: false,
+        fallbackReason: "No AI API key configured. Please set OPENAI_API_KEY or ANTHROPIC_API_KEY environment variable.",
+      });
     }
 
     // Try OpenAI first, then Anthropic, fallback to basic
@@ -67,7 +67,6 @@ export async function POST(request: NextRequest) {
         } catch (openaiError: any) {
           // If OpenAI fails with quota error, try Anthropic if available
           if ((openaiError.isQuotaError || openaiError.message?.includes("quota") || openaiError.message?.includes("insufficient_quota")) && process.env.ANTHROPIC_API_KEY) {
-            console.log("OpenAI quota exceeded, trying Anthropic...");
             fallbackReason = "OpenAI quota exceeded, trying Anthropic";
             try {
               changelog = await generateWithAnthropic(formattedCommits, processedCommits, commitsToProcess, projectName, versionLabel);
@@ -94,17 +93,33 @@ export async function POST(request: NextRequest) {
       // Post-process the changelog to ensure quality
       changelog = postProcessChangelog(changelog, versionLabel);
     } catch (aiError: any) {
+      // Log the actual error for debugging (only in development)
+      if (process.env.NODE_ENV === "development") {
+        const errorLog = {
+          type: "AI_GENERATION_ERROR",
+          error: {
+            message: aiError.message,
+            name: aiError.name,
+            stack: aiError.stack?.substring(0, 500), // Truncate stack
+          },
+          projectName,
+          versionLabel,
+          commitsCount: commitsToProcess.length,
+          timestamp: new Date().toISOString(),
+        };
+        // eslint-disable-next-line no-console
+        console.log(JSON.stringify(errorLog, null, 2));
+      }
+
       // If AI generation fails, fallback to basic changelog
-      console.error("AI generation failed, falling back to basic changelog:", aiError);
-      
       if (aiError.message?.includes("quota") || aiError.message?.includes("insufficient_quota")) {
         fallbackReason = "AI API quota exceeded";
       } else if (aiError.message?.includes("token") || aiError.message?.includes("context_length")) {
         fallbackReason = "Token limit exceeded - too many commits. Try selecting fewer commits.";
-      } else if (aiError.message?.includes("API key")) {
+      } else if (aiError.message?.includes("API key") || aiError.message?.includes("not configured")) {
         fallbackReason = "AI API key not configured or invalid";
       } else {
-        fallbackReason = "AI generation failed";
+        fallbackReason = `AI generation failed: ${aiError.message || "Unknown error"}`;
       }
       
       changelog = generateBasicChangelog(commitsToProcess, versionLabel);
@@ -116,7 +131,6 @@ export async function POST(request: NextRequest) {
       fallbackReason: fallbackReason && !aiUsed ? fallbackReason : null,
     });
   } catch (error) {
-    console.error("Error generating changelog:", error);
     const errorMessage = error instanceof Error ? error.message : "Failed to generate changelog";
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
@@ -196,6 +210,14 @@ function formatCommitsForAI(processedCommits: { title: string; description: stri
 function postProcessChangelog(changelog: string, versionLabel: string): string {
   // Ensure the changelog starts with the version header
   let processed = changelog.trim();
+  
+  // Remove any code block wrappers (AI sometimes wraps response in ```markdown blocks)
+  // Remove opening ```markdown or ``` blocks
+  processed = processed.replace(/^```(?:markdown)?\s*\n?/i, "");
+  // Remove closing ``` blocks
+  processed = processed.replace(/\n?```\s*$/i, "");
+  
+  processed = processed.trim();
   
   // Remove any leading/trailing whitespace
   processed = processed.replace(/^\s+|\s+$/g, "");
@@ -302,32 +324,45 @@ CRITICAL INSTRUCTIONS:
 
 Generate ONLY the markdown changelog content, starting with "## ${versionLabel}".`;
 
+    const requestBody = {
+      model: process.env.OPENAI_MODEL || "gpt-4o-mini", // Default to cheaper model, can override with env var
+      messages: [
+        {
+          role: "system",
+          content: systemPrompt,
+        },
+        {
+          role: "user",
+          content: userPrompt,
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 4000, // Reduced from 2000 to prevent token limit issues
+    };
+
+    // Log request to model
+    const logRequest = {
+      provider: "OpenAI",
+      model: requestBody.model,
+      systemPrompt: systemPrompt.substring(0, 200) + "...", // Truncate for logging
+      userPrompt: userPrompt.substring(0, 500) + "...", // Truncate for logging
+      commitsCount: originalCommits.length,
+      projectName,
+      versionLabel,
+      timestamp: new Date().toISOString(),
+    };
+
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
-        model: process.env.OPENAI_MODEL || "gpt-3.5-turbo", // Default to cheaper model, can override with env var
-        messages: [
-          {
-            role: "system",
-            content: systemPrompt,
-          },
-          {
-            role: "user",
-            content: userPrompt,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 1500, // Reduced from 2000 to prevent token limit issues
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ error: { message: "Unknown error" } }));
-      console.error("OpenAI API error:", response.status, errorData);
       
       const errorMessage = errorData.error?.message || "Failed to generate changelog";
       const error = new Error(`OpenAI API error (${response.status}): ${errorMessage}`);
@@ -345,6 +380,32 @@ Generate ONLY the markdown changelog content, starting with "## ${versionLabel}"
     
     if (!content) {
       throw new Error("No content received from OpenAI");
+    }
+
+    // Log response from model
+    const logResponse = {
+      provider: "OpenAI",
+      model: requestBody.model,
+      status: response.status,
+      responseLength: content.length,
+      responsePreview: content.substring(0, 300) + "...", // Truncate for logging
+      tokensUsed: data.usage?.total_tokens || null,
+      timestamp: new Date().toISOString(),
+    };
+
+    // Log both request and response (in production, you might want to use a proper logger)
+    // For now, we'll structure it as JSON that can be logged
+    const logEntry = {
+      type: "AI_CHANGELOG_GENERATION",
+      request: logRequest,
+      response: logResponse,
+    };
+    
+    // In production, use a proper logging service
+    // For development, this will be visible in server logs
+    if (process.env.NODE_ENV === "development") {
+      // eslint-disable-next-line no-console
+      console.log(JSON.stringify(logEntry, null, 2));
     }
     
     return content.trim();
@@ -419,6 +480,30 @@ CRITICAL INSTRUCTIONS:
 Generate ONLY the markdown changelog content, starting with "## ${versionLabel}".`;
 
   try {
+    const requestBody = {
+      model: "claude-3-5-sonnet-20241022",
+      max_tokens: 1500, // Reduced from 2000 to prevent token limit issues
+      messages: [
+        {
+          role: "user",
+          content: userPrompt,
+        },
+      ],
+      system: systemPrompt,
+    };
+
+    // Log request to model
+    const logRequest = {
+      provider: "Anthropic",
+      model: requestBody.model,
+      systemPrompt: systemPrompt.substring(0, 200) + "...", // Truncate for logging
+      userPrompt: userPrompt.substring(0, 500) + "...", // Truncate for logging
+      commitsCount: originalCommits.length,
+      projectName,
+      versionLabel,
+      timestamp: new Date().toISOString(),
+    };
+
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -426,22 +511,11 @@ Generate ONLY the markdown changelog content, starting with "## ${versionLabel}"
         "x-api-key": apiKey,
         "anthropic-version": "2023-06-01",
       },
-      body: JSON.stringify({
-        model: "claude-3-5-sonnet-20241022",
-        max_tokens: 1500, // Reduced from 2000 to prevent token limit issues
-        messages: [
-          {
-            role: "user",
-            content: userPrompt,
-          },
-        ],
-        system: systemPrompt,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ error: { message: "Unknown error" } }));
-      console.error("Anthropic API error:", response.status, errorData);
       throw new Error(
         `Anthropic API error (${response.status}): ${errorData.error?.message || "Failed to generate changelog"}`
       );
@@ -452,6 +526,33 @@ Generate ONLY the markdown changelog content, starting with "## ${versionLabel}"
     
     if (!content) {
       throw new Error("No content received from Anthropic");
+    }
+
+    // Log response from model
+    const logResponse = {
+      provider: "Anthropic",
+      model: requestBody.model,
+      status: response.status,
+      responseLength: content.length,
+      responsePreview: content.substring(0, 300) + "...", // Truncate for logging
+      tokensUsed: data.usage?.input_tokens && data.usage?.output_tokens 
+        ? data.usage.input_tokens + data.usage.output_tokens 
+        : null,
+      timestamp: new Date().toISOString(),
+    };
+
+    // Log both request and response (in production, you might want to use a proper logger)
+    const logEntry = {
+      type: "AI_CHANGELOG_GENERATION",
+      request: logRequest,
+      response: logResponse,
+    };
+    
+    // In production, use a proper logging service
+    // For development, this will be visible in server logs
+    if (process.env.NODE_ENV === "development") {
+      // eslint-disable-next-line no-console
+      console.log(JSON.stringify(logEntry, null, 2));
     }
     
     return content.trim();
@@ -468,7 +569,10 @@ function generateBasicChangelog(commits: Commit[], versionLabel: string): string
     return `## ${versionLabel}\n\nNo changes documented.`;
   }
 
-  const lines = [`## ${versionLabel}\n`];
+  const lines = [
+    `## ${versionLabel}\n`,
+    `> ⚠️ **Note:** This changelog was generated automatically from commit messages. For AI-enhanced formatting and better organization, please configure an AI API key (OpenAI or Anthropic).\n\n`,
+  ];
 
   // Group commits by type (basic categorization)
   const added: string[] = [];
