@@ -1,6 +1,7 @@
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import type { NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import GitHub from "next-auth/providers/github";
 import { compare } from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "./prisma";
@@ -54,6 +55,15 @@ export const authOptions: NextAuthOptions = {
           name: user.name ?? undefined,
           image: user.image ?? undefined,
         };
+      },
+    }),
+    GitHub({
+      clientId: process.env.GITHUB_CLIENT_ID ?? "",
+      clientSecret: process.env.GITHUB_CLIENT_SECRET ?? "",
+      authorization: {
+        params: {
+          scope: "read:user user:email repo",
+        },
       },
     }),
   ],

@@ -7,16 +7,17 @@ import { Button } from "@/components/ui/button";
 type SignOutButtonProps = {
   variant?: "default" | "outline" | "ghost";
   children?: React.ReactNode;
+  className?: string;
 };
 
-export function SignOutButton({ variant = "ghost", children }: SignOutButtonProps) {
+export function SignOutButton({ variant = "ghost", children, className }: SignOutButtonProps) {
   const [isPending, startTransition] = useTransition();
 
   return (
     <Button
       type="button"
       variant={variant}
-      className="justify-start"
+      className={className || "justify-start"}
       onClick={() =>
         startTransition(async () => {
           await signOut({

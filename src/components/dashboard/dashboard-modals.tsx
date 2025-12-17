@@ -55,6 +55,8 @@ type CreateVersionModalProps = {
   projectId: string;
   projectSlug: string;
   projectName: string;
+  githubRepoId?: string | null;
+  githubRepoUrl?: string | null;
   triggerVariant?: "solid" | "outline";
   triggerLabel?: string;
   size?: ButtonSize;
@@ -65,6 +67,8 @@ export function CreateVersionModal({
   projectId,
   projectSlug,
   projectName,
+  githubRepoId,
+  githubRepoUrl,
   triggerVariant = "solid",
   triggerLabel = "New release",
   size = "sm",
@@ -99,6 +103,8 @@ export function CreateVersionModal({
           projectId={projectId}
           projectSlug={projectSlug}
           projectName={projectName}
+          githubRepoId={githubRepoId}
+          githubRepoUrl={githubRepoUrl}
           onSuccess={() => setOpen(false)}
         />
       </Modal>
